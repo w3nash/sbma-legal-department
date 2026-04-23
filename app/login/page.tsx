@@ -1,11 +1,11 @@
 // app/login/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth-client";
+import { signIn, useSession } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -22,10 +22,17 @@ import { AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      router.push("/cases");
+    }
+  }, [session, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
