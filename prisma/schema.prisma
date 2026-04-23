@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,170 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          UserRole  @default(member)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  uploadedDocuments Document[] @relation("UploadedBy")
+  caseMemberships   CaseMember[]
+  auditLogs         AuditLog[]
+  createdCases      Case[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+enum UserRole {
+  admin
+  member
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Case {
+  id          String     @id @default(uuid())
+  title       String
+  caseNumber  String?
+  description String?
+  status      CaseStatus @default(open)
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  members   CaseMember[]
+  documents Document[]
+  auditLogs AuditLog[]
+
+  @@map("case")
+}
+
+enum CaseStatus {
+  open
+  closed
+  archived
+}
+
+model CaseMember {
+  id        String         @id @default(uuid())
+  caseId    String
+  case      Case           @relation(fields: [caseId], references: [id])
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  role      CaseMemberRole @default(viewer)
+  createdAt DateTime       @default(now())
+
+  @@unique([caseId, userId])
+  @@map("case_member")
+}
+
+enum CaseMemberRole {
+  viewer
+  uploader
+}
+
+model Document {
+  id                String   @id @default(uuid())
+  caseId            String
+  case              Case     @relation(fields: [caseId], references: [id])
+  controlNumber     String   @unique
+  originalFilename  String
+  storedOriginalKey String
+  storedViewerKey   String
+  fileSizeBytes     BigInt?
+  mimeType          String?
+  encryptionKey     String
+  uploadedById      String
+  uploadedBy        User     @relation("UploadedBy", fields: [uploadedById], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("document")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  action     AuditAction
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  documentId String?
+  document   Document?   @relation(fields: [documentId], references: [id])
+  caseId     String?
+  case       Case?       @relation(fields: [caseId], references: [id])
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime    @default(now())
+  metadata   Json?
+
+  @@map("audit_log")
+}
+
+enum AuditAction {
+  UPLOAD
+  VIEW
+  DOWNLOAD
+  PRINT
+  DELETE
+  SHARE
+  LOGIN
+  LOGOUT
 }
