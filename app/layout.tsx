@@ -1,8 +1,13 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "./components/AuthProvider";
+import { QueryProvider } from "./components/QueryProvider";
+import { AppSidebar } from "./components/AppSidebar";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -11,11 +16,22 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = session?.user
+    ? {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
+        image: session.user.image,
+      }
+    : null;
+
   return (
     <html
       lang="en"
@@ -28,7 +44,14 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider user={user}>
+            <QueryProvider>
+              <AppSidebar />
+              <main className="flex-1 p-6">{children}</main>
+            </QueryProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
