@@ -1,6 +1,12 @@
 import crypto from "crypto";
 
-const MASTER_KEY = Buffer.from(process.env.MASTER_ENCRYPTION_KEY!, "base64");
+function getMasterKey(): Buffer {
+  const key = process.env.MASTER_ENCRYPTION_KEY;
+  if (!key) {
+    throw new Error("MASTER_ENCRYPTION_KEY env var must be set before using crypto functions");
+  }
+  return Buffer.from(key, "base64");
+}
 
 export function generateFileKey(): string {
   return crypto.randomBytes(32).toString("base64");
@@ -27,7 +33,7 @@ export function decryptFile(encrypted: Buffer, keyB64: string): Buffer {
 
 export function encryptKey(fileKey: string): string {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv("aes-256-gcm", MASTER_KEY, iv);
+  const cipher = crypto.createCipheriv("aes-256-gcm", getMasterKey(), iv);
   const encrypted = Buffer.concat([
     cipher.update(Buffer.from(fileKey, "base64")),
     cipher.final(),
@@ -41,7 +47,7 @@ export function decryptKey(encryptedKeyB64: string): string {
   const iv = encrypted.subarray(0, 16);
   const authTag = encrypted.subarray(16, 32);
   const ciphertext = encrypted.subarray(32);
-  const decipher = crypto.createDecipheriv("aes-256-gcm", MASTER_KEY, iv);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", getMasterKey(), iv);
   decipher.setAuthTag(authTag);
   const key = Buffer.concat([
     decipher.update(ciphertext),
