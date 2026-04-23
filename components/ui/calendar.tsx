@@ -10,7 +10,11 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { RiArrowLeftSLine, RiArrowRightSLine, RiArrowDownSLine } from "@remixicon/react"
+import {
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+  RiArrowDownSLine,
+} from "@remixicon/react"
 
 function Calendar({
   className,
@@ -147,13 +151,19 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
-              <RiArrowLeftSLine className={cn("size-4", className)} {...props} />
+              <RiArrowLeftSLine
+                className={cn("size-4", className)}
+                {...props}
+              />
             )
           }
 
           if (orientation === "right") {
             return (
-              <RiArrowRightSLine className={cn("size-4", className)} {...props} />
+              <RiArrowRightSLine
+                className={cn("size-4", className)}
+                {...props}
+              />
             )
           }
 

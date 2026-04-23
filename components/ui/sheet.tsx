@@ -70,8 +70,7 @@ function SheetContent({
               />
             }
           >
-            <RiCloseLine
-            />
+            <RiCloseLine />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}
