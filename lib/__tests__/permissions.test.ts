@@ -16,16 +16,28 @@ describe("permissions", () => {
     expect(canViewCase({ role: UserRole.Member }, null)).toBe(false);
   });
   it("member with active membership can view case", () => {
-    expect(canViewCase({ role: UserRole.Member }, { role: MembershipRole.Viewer })).toBe(true);
+    expect(
+      canViewCase({ role: UserRole.Member }, { role: MembershipRole.Viewer })
+    ).toBe(true);
   });
   it("admin can upload to any case", () => {
     expect(canUploadToCase({ role: UserRole.Admin }, null)).toBe(true);
   });
   it("viewer cannot upload", () => {
-    expect(canUploadToCase({ role: UserRole.Member }, { role: MembershipRole.Viewer })).toBe(false);
+    expect(
+      canUploadToCase(
+        { role: UserRole.Member },
+        { role: MembershipRole.Viewer }
+      )
+    ).toBe(false);
   });
   it("uploader can upload", () => {
-    expect(canUploadToCase({ role: UserRole.Member }, { role: MembershipRole.Uploader })).toBe(true);
+    expect(
+      canUploadToCase(
+        { role: UserRole.Member },
+        { role: MembershipRole.Uploader }
+      )
+    ).toBe(true);
   });
   it("member without membership cannot upload to case", () => {
     expect(canUploadToCase({ role: UserRole.Member }, null)).toBe(false);
@@ -34,7 +46,12 @@ describe("permissions", () => {
     expect(canDownloadDocument({ role: UserRole.Admin }, null)).toBe(true);
   });
   it("member with membership can download document", () => {
-    expect(canDownloadDocument({ role: UserRole.Member }, { role: MembershipRole.Viewer })).toBe(true);
+    expect(
+      canDownloadDocument(
+        { role: UserRole.Member },
+        { role: MembershipRole.Viewer }
+      )
+    ).toBe(true);
   });
   it("member without membership cannot download document", () => {
     expect(canDownloadDocument({ role: UserRole.Member }, null)).toBe(false);

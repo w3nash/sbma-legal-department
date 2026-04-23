@@ -5,9 +5,5 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <QueryProvider>
-      {children}
-    </QueryProvider>
-  );
+  return <QueryProvider>{children}</QueryProvider>;
 }

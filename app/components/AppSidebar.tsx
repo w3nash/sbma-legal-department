@@ -19,11 +19,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,7 +53,7 @@ export function AppSidebar() {
                     alt="SBMA Logo"
                     width={32}
                     height={32}
-                    className="rounded shrink-0"
+                    className="shrink-0 rounded"
                   />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
@@ -141,10 +137,7 @@ export function AppSidebar() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage
-                        src={user?.image ?? ""}
-                        alt={user?.name}
-                      />
+                      <AvatarImage src={user?.image ?? ""} alt={user?.name} />
                       <AvatarFallback className="rounded-lg">
                         {user?.name?.charAt(0) || "U"}
                       </AvatarFallback>

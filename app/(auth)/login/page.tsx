@@ -71,8 +71,8 @@ export default function LoginPage() {
         />
 
         {/* Decorative corner borders */}
-        <div className="absolute left-8 top-8 h-24 w-24 border-l border-t border-[#c9a84c]/20" />
-        <div className="absolute bottom-8 right-8 h-24 w-24 border-b border-r border-[#c9a84c]/20" />
+        <div className="absolute top-8 left-8 h-24 w-24 border-t border-l border-[#c9a84c]/20" />
+        <div className="absolute right-8 bottom-8 h-24 w-24 border-r border-b border-[#c9a84c]/20" />
 
         <div className="relative z-10 flex flex-col items-center gap-6">
           <div className="rounded-full border border-[#c9a84c]/20 bg-[#0f2447]/50 p-6 backdrop-blur-sm">
@@ -91,7 +91,7 @@ export default function LoginPage() {
             </h1>
             <div className="mt-2 flex items-center justify-center gap-3">
               <div className="h-px w-8 bg-[#c9a84c]/40" />
-              <p className="text-sm font-medium uppercase tracking-widest text-[#c9a84c]">
+              <p className="text-sm font-medium tracking-widest text-[#c9a84c] uppercase">
                 Case Document Management
               </p>
               <div className="h-px w-8 bg-[#c9a84c]/40" />
@@ -99,7 +99,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="absolute bottom-10 text-xs uppercase tracking-widest text-white/30">
+        <div className="absolute bottom-10 text-xs tracking-widest text-white/30 uppercase">
           &copy; {new Date().getFullYear()} SBMA Legal Affairs
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <Alert variant="destructive" role="alert">
-                    <RiErrorWarningLine className="h-4 w-4" />
+                  <RiErrorWarningLine className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -175,7 +175,7 @@ export default function LoginPage() {
 
               <Separator className="my-4" />
 
-              <p className="text-center text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="text-center text-xs tracking-widest text-muted-foreground uppercase">
                 Authorized personnel only
               </p>
             </form>

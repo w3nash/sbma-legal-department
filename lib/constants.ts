@@ -16,7 +16,8 @@ export const MembershipRole = {
   Uploader: "uploader",
 } as const;
 
-export type MembershipRole = (typeof MembershipRole)[keyof typeof MembershipRole];
+export type MembershipRole =
+  (typeof MembershipRole)[keyof typeof MembershipRole];
 
 /**
  * Application routes.
