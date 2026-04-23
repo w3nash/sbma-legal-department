@@ -7,13 +7,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn, useSession } from "@/lib/auth-client";
 import { Route } from "@/lib/constants";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -60,43 +53,60 @@ export default function LoginPage() {
   if (isPending) {
     return (
       <div className="flex min-h-svh items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0033A0] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      {/* Left column - Branding (hidden on mobile) */}
-      <div className="relative hidden flex-col items-center justify-center bg-[#0033A0] p-10 text-white lg:flex">
-        <div className="flex flex-col items-center gap-5">
-          <div className="rounded-full bg-white/10 p-4 backdrop-blur-sm">
+      {/* Left column - Government Archive Branding */}
+      <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-[#0a1628] p-10 text-white lg:flex">
+        {/* Geometric cross pattern watermark */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Decorative corner borders */}
+        <div className="absolute left-8 top-8 h-24 w-24 border-l border-t border-[#c9a84c]/20" />
+        <div className="absolute bottom-8 right-8 h-24 w-24 border-b border-r border-[#c9a84c]/20" />
+
+        <div className="relative z-10 flex flex-col items-center gap-6">
+          <div className="rounded-full border border-[#c9a84c]/20 bg-[#0f2447]/50 p-6 backdrop-blur-sm">
             <Image
               src="/sbma-logo.png"
               alt="SBMA Logo"
-              width={120}
-              height={120}
+              width={100}
+              height={100}
               className="rounded"
               priority
             />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-white">
+            <h1 className="font-serif text-3xl font-semibold tracking-wide text-white">
               SBMA Legal Affairs
             </h1>
-            <p className="text-sm text-[#FFD700]">
-              Case Document Management
-            </p>
+            <div className="mt-2 flex items-center justify-center gap-3">
+              <div className="h-px w-8 bg-[#c9a84c]/40" />
+              <p className="text-sm font-medium uppercase tracking-widest text-[#c9a84c]">
+                Case Document Management
+              </p>
+              <div className="h-px w-8 bg-[#c9a84c]/40" />
+            </div>
           </div>
         </div>
-        <div className="absolute bottom-10 text-sm text-white/70">
+
+        <div className="absolute bottom-10 text-xs uppercase tracking-widest text-white/30">
           &copy; {new Date().getFullYear()} SBMA Legal Affairs
         </div>
       </div>
 
-      {/* Right column - Login form (full width on mobile) */}
+      {/* Right column - Minimal Login Form */}
       <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center items-center gap-3 lg:hidden">
+        <div className="flex items-center justify-center gap-3 lg:hidden">
           <Image
             src="/sbma-logo.png"
             alt="SBMA Logo"
@@ -104,79 +114,72 @@ export default function LoginPage() {
             height={32}
             className="rounded"
           />
-          <span className="text-lg font-medium text-[#0033A0]">
+          <span className="text-lg font-semibold text-[#0a1628] dark:text-[#e8e2d4]">
             SBMA Legal Affairs
           </span>
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <Card className="w-full max-w-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-semibold tracking-tight text-[#0033A0]">
+          <div className="w-full max-w-sm space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold tracking-tight">
                 Welcome back
-              </CardTitle>
-              <CardDescription>
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 Enter your credentials to access your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <Alert variant="destructive" role="alert">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="focus-visible:ring-[#0033A0]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      href={Route.ForgotPassword}
-                      className="text-sm text-[#0033A0] hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="focus-visible:ring-[#0033A0]"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-red-600 hover:bg-red-700"
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive" role="alert">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   disabled={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    href={Route.ForgotPassword}
+                    className="text-sm text-muted-foreground hover:text-primary"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Authenticating..." : "Sign In"}
+              </Button>
 
-                <Separator className="my-4" />
+              <Separator className="my-4" />
 
-                <p className="text-center text-sm text-muted-foreground">
-                  Authorized personnel only
-                </p>
-              </form>
-            </CardContent>
-          </Card>
+              <p className="text-center text-xs uppercase tracking-widest text-muted-foreground">
+                Authorized personnel only
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>
