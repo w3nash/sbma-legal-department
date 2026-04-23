@@ -1,9 +1,11 @@
+import { UserRole, MembershipRole } from "./constants";
+
 export interface UserContext {
-  role: "admin" | "member";
+  role: UserRole;
 }
 
 export interface MembershipContext {
-  role: "viewer" | "uploader";
+  role: MembershipRole;
 }
 
 /**
@@ -14,7 +16,7 @@ export function canViewCase(
   user: UserContext,
   membership: MembershipContext | null
 ): boolean {
-  if (user.role === "admin") return true;
+  if (user.role === UserRole.Admin) return true;
   return membership !== null;
 }
 
@@ -26,8 +28,8 @@ export function canUploadToCase(
   user: UserContext,
   membership: MembershipContext | null
 ): boolean {
-  if (user.role === "admin") return true;
-  return membership?.role === "uploader";
+  if (user.role === UserRole.Admin) return true;
+  return membership?.role === MembershipRole.Uploader;
 }
 
 /**
@@ -38,7 +40,7 @@ export function canDownloadDocument(
   user: UserContext,
   membership: MembershipContext | null
 ): boolean {
-  if (user.role === "admin") return true;
+  if (user.role === UserRole.Admin) return true;
   return membership !== null;
 }
 
@@ -47,7 +49,7 @@ export function canDownloadDocument(
  * Only admins can manage cases.
  */
 export function canManageCase(user: UserContext): boolean {
-  return user.role === "admin";
+  return user.role === UserRole.Admin;
 }
 
 /**
@@ -55,5 +57,5 @@ export function canManageCase(user: UserContext): boolean {
  * Only admins can manage users.
  */
 export function canManageUsers(user: UserContext): boolean {
-  return user.role === "admin";
+  return user.role === UserRole.Admin;
 }

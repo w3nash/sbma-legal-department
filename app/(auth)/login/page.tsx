@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn, useSession } from "@/lib/auth-client";
+import { Route } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -30,7 +31,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session) {
-      router.push("/cases");
+      router.push(Route.Cases);
+      router.refresh();
     }
   }, [session, router]);
 
@@ -42,7 +44,7 @@ export default function LoginPage() {
     const result = await signIn.email({
       email,
       password,
-      callbackURL: "/cases",
+      callbackURL: Route.Cases,
     });
 
     setIsLoading(false);
@@ -50,7 +52,7 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error.message || "Invalid credentials");
     } else {
-      router.push("/cases");
+      router.push(Route.Cases);
       router.refresh();
     }
   }
@@ -135,7 +137,7 @@ export default function LoginPage() {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
                     <Link
-                      href="/forgot-password"
+                      href={Route.ForgotPassword}
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Forgot password?

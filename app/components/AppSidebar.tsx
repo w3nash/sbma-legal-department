@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import { Route, UserRole } from "@/lib/constants";
 import { useAuthUser } from "./AuthProvider";
 import {
   Sidebar,
@@ -29,7 +30,7 @@ import {
 
 export function AppSidebar() {
   const user = useAuthUser();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === UserRole.Admin;
   const isLoading = user === undefined;
   const pathname = usePathname();
 
@@ -69,8 +70,8 @@ export function AppSidebar() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    isActive={pathname === "/cases"}
-                    render={<Link href="/cases">Cases</Link>}
+                    isActive={pathname === Route.Cases}
+                    render={<Link href={Route.Cases}>Cases</Link>}
                   />
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -84,14 +85,14 @@ export function AppSidebar() {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      isActive={pathname === "/admin/users"}
-                      render={<Link href="/admin/users">Users</Link>}
+                      isActive={pathname === Route.AdminUsers}
+                      render={<Link href={Route.AdminUsers}>Users</Link>}
                     />
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      isActive={pathname === "/admin/audit-logs"}
-                      render={<Link href="/admin/audit-logs">Audit Logs</Link>}
+                      isActive={pathname === Route.AdminAuditLogs}
+                      render={<Link href={Route.AdminAuditLogs}>Audit Logs</Link>}
                     />
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -131,11 +132,11 @@ export function AppSidebar() {
                   side="top"
                   className="w-[--radix-popper-anchor-width]"
                 >
-                  <DropdownMenuItem render={<Link href="/profile">Profile</Link>} />
+                  <DropdownMenuItem render={<Link href={Route.Profile}>Profile</Link>} />
                   <DropdownMenuItem
                     onClick={async () => {
                       await signOut();
-                      window.location.href = "/login";
+                      window.location.href = Route.Login;
                     }}
                   >
                     Logout
