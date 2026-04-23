@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "./components/QueryProvider";
-import { LayoutWrapper } from "./components/LayoutWrapper";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -31,9 +29,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <QueryProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </QueryProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>
