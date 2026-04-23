@@ -1,6 +1,7 @@
 // app/components/AppSidebar.tsx
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthUser } from "./AuthProvider";
@@ -39,9 +40,13 @@ export function AppSidebar() {
                 size="lg"
                 render={
                   <Link href="/">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <span className="text-sm font-bold">SL</span>
-                    </div>
+                    <Image
+                      src="/sbma-logo.png"
+                      alt="SBMA Logo"
+                      width={32}
+                      height={32}
+                      className="rounded shrink-0"
+                    />
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">SBMA Legal Affairs</span>
                       <span className="truncate text-xs text-muted-foreground">

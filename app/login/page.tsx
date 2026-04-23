@@ -52,19 +52,25 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* Left column - Branding (hidden on mobile) */}
-      <div className="relative hidden flex-col justify-between bg-muted p-10 text-muted-foreground lg:flex">
-        <div className="flex items-center gap-3 text-lg font-medium text-foreground">
+      <div className="relative hidden flex-col items-center justify-center bg-muted p-10 text-muted-foreground lg:flex">
+        <div className="flex flex-col items-center gap-5">
           <Image
             src="/sbma-logo.png"
             alt="SBMA Logo"
-            width={40}
-            height={40}
+            width={120}
+            height={120}
             className="rounded"
+            priority
           />
-          SBMA Legal Affairs
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-foreground">
+              SBMA Legal Affairs
+            </h1>
+            <p className="text-sm text-muted-foreground">Document Portal</p>
+          </div>
         </div>
-        <div className="text-sm">
-          &copy; {new Date().getFullYear()} SBMA Legal Affairs. All rights reserved.
+        <div className="absolute bottom-10 text-sm">
+          &copy; {new Date().getFullYear()} SBMA Legal Affairs
         </div>
       </div>
 
