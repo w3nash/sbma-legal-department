@@ -1,4 +1,4 @@
-FROM node:alpine AS base
+FROM node:22-alpine AS base
 
 # Install LibreOffice for document conversion
 RUN apk add --no-cache libreoffice

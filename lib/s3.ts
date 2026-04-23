@@ -1,13 +1,14 @@
 import { S3Client } from "@aws-sdk/client-s3"
+import { env } from "@/env"
 
 export const s3Client = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,
-  region: process.env.S3_REGION || "ap-southeast-1",
+  endpoint: env.S3_ENDPOINT,
+  region: env.S3_REGION,
   credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+    accessKeyId: env.S3_ACCESS_KEY_ID,
+    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
   },
-  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+  forcePathStyle: env.S3_FORCE_PATH_STYLE === "true",
 })
 
-export const BUCKET_NAME = process.env.S3_BUCKET!
+export const BUCKET_NAME = env.S3_BUCKET

@@ -1,13 +1,8 @@
 import crypto from "crypto"
+import { env } from "@/env"
 
 function getMasterKey(): Buffer {
-  const key = process.env.MASTER_ENCRYPTION_KEY
-  if (!key) {
-    throw new Error(
-      "MASTER_ENCRYPTION_KEY env var must be set before using crypto functions"
-    )
-  }
-  return Buffer.from(key, "base64")
+  return Buffer.from(env.MASTER_ENCRYPTION_KEY, "base64")
 }
 
 export function generateFileKey(): string {
