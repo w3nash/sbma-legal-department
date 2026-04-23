@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 import { useAuthUser } from "./AuthProvider";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ import {
 export function AppSidebar() {
   const user = useAuthUser();
   const isAdmin = user?.role === "admin";
+  const isLoading = user === undefined;
   const pathname = usePathname();
 
   return (
@@ -130,12 +132,13 @@ export function AppSidebar() {
                   className="w-[--radix-popper-anchor-width]"
                 >
                   <DropdownMenuItem render={<Link href="/profile">Profile</Link>} />
-                  <DropdownMenuItem>
-                    <form action="/api/auth/signout" method="post" className="w-full">
-                      <button type="submit" className="w-full text-left">
-                        Logout
-                      </button>
-                    </form>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut();
+                      window.location.href = "/login";
+                    }}
+                  >
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

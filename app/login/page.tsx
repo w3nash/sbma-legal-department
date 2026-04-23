@@ -5,6 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -30,22 +31,20 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    try {
-      const res = await fetch("/api/auth/sign-in/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Invalid credentials");
-      }
+
+    const result = await signIn.email({
+      email,
+      password,
+      callbackURL: "/cases",
+    });
+
+    setIsLoading(false);
+
+    if (result.error) {
+      setError(result.error.message || "Invalid credentials");
+    } else {
       router.push("/cases");
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
     }
   }
 

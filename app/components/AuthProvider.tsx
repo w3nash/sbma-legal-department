@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { useSession } from "@/lib/auth-client";
 
-type SessionUser = {
+export type SessionUser = {
   id: string;
   email: string;
   name: string;
@@ -10,18 +10,11 @@ type SessionUser = {
   image?: string | null;
 };
 
-const AuthContext = createContext<SessionUser | null>(null);
-
-export function AuthProvider({
-  user,
-  children,
-}: {
-  user: SessionUser | null;
-  children: React.ReactNode;
-}) {
-  return <AuthContext.Provider value={user}>{children}</AuthContext.Provider>;
-}
-
 export function useAuthUser() {
-  return useContext(AuthContext);
+  const { data: session, isPending } = useSession();
+
+  if (isPending) return undefined;
+  if (!session) return null;
+
+  return session.user as unknown as SessionUser;
 }
