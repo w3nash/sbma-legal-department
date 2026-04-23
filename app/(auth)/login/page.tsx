@@ -60,7 +60,7 @@ export default function LoginPage() {
   if (isPending) {
     return (
       <div className="flex min-h-svh items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0033A0] border-t-transparent" />
       </div>
     );
   }
@@ -68,24 +68,28 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* Left column - Branding (hidden on mobile) */}
-      <div className="relative hidden flex-col items-center justify-center bg-muted p-10 text-muted-foreground lg:flex">
+      <div className="relative hidden flex-col items-center justify-center bg-[#0033A0] p-10 text-white lg:flex">
         <div className="flex flex-col items-center gap-5">
-          <Image
-            src="/sbma-logo.png"
-            alt="SBMA Logo"
-            width={120}
-            height={120}
-            className="rounded"
-            priority
-          />
+          <div className="rounded-full bg-white/10 p-4 backdrop-blur-sm">
+            <Image
+              src="/sbma-logo.png"
+              alt="SBMA Logo"
+              width={120}
+              height={120}
+              className="rounded"
+              priority
+            />
+          </div>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-foreground">
+            <h1 className="text-2xl font-semibold text-white">
               SBMA Legal Affairs
             </h1>
-            <p className="text-sm text-muted-foreground">Case Document Management</p>
+            <p className="text-sm text-[#FFD700]">
+              Case Document Management
+            </p>
           </div>
         </div>
-        <div className="absolute bottom-10 text-sm">
+        <div className="absolute bottom-10 text-sm text-white/70">
           &copy; {new Date().getFullYear()} SBMA Legal Affairs
         </div>
       </div>
@@ -100,13 +104,15 @@ export default function LoginPage() {
             height={32}
             className="rounded"
           />
-          <span className="text-lg font-medium">SBMA Legal Affairs</span>
+          <span className="text-lg font-medium text-[#0033A0]">
+            SBMA Legal Affairs
+          </span>
         </div>
 
         <div className="flex flex-1 items-center justify-center">
           <Card className="w-full max-w-sm">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-semibold tracking-tight">
+              <CardTitle className="text-2xl font-semibold tracking-tight text-[#0033A0]">
                 Welcome back
               </CardTitle>
               <CardDescription>
@@ -131,6 +137,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
+                    className="focus-visible:ring-[#0033A0]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -138,7 +145,7 @@ export default function LoginPage() {
                     <Label htmlFor="password">Password</Label>
                     <Link
                       href={Route.ForgotPassword}
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-sm text-[#0033A0] hover:underline"
                     >
                       Forgot password?
                     </Link>
@@ -151,9 +158,14 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
+                    className="focus-visible:ring-[#0033A0]"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#0033A0] hover:bg-[#002a80]"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
 
