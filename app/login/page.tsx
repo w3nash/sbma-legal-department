@@ -66,7 +66,7 @@ export default function LoginPage() {
             <h1 className="text-2xl font-semibold text-foreground">
               SBMA Legal Affairs
             </h1>
-            <p className="text-sm text-muted-foreground">Document Portal</p>
+            <p className="text-sm text-muted-foreground">Case Document Management</p>
           </div>
         </div>
         <div className="absolute bottom-10 text-sm">
