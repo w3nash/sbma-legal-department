@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { RiErrorWarningLine } from "@remixicon/react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -133,7 +133,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <Alert variant="destructive" role="alert">
-                  <AlertCircle className="h-4 w-4" />
+                    <RiErrorWarningLine className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
