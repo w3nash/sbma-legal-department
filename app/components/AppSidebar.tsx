@@ -43,7 +43,7 @@ export function AppSidebar() {
                       <span className="text-sm font-bold">SL</span>
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">SBMA Legal</span>
+                      <span className="truncate font-semibold">SBMA Legal Affairs</span>
                       <span className="truncate text-xs text-muted-foreground">
                         Document Portal
                       </span>

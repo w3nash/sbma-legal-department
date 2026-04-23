@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,33 +53,32 @@ export default function LoginPage() {
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* Left column - Branding (hidden on mobile) */}
       <div className="relative hidden flex-col justify-between bg-muted p-10 text-muted-foreground lg:flex">
-        <div className="flex items-center gap-2 text-lg font-medium text-foreground">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Shield className="h-4 w-4" />
-          </div>
-          SBMA Legal
-        </div>
-        <div className="space-y-6">
-          <blockquote className="space-y-2">
-            <p className="text-lg leading-relaxed">
-              &ldquo;Secure document management for legal professionals.
-              Protecting sensitive case files with enterprise-grade
-              encryption.&rdquo;
-            </p>
-          </blockquote>
+        <div className="flex items-center gap-3 text-lg font-medium text-foreground">
+          <Image
+            src="/sbma-logo.png"
+            alt="SBMA Logo"
+            width={40}
+            height={40}
+            className="rounded"
+          />
+          SBMA Legal Affairs
         </div>
         <div className="text-sm">
-          &copy; {new Date().getFullYear()} SBMA Legal. All rights reserved.
+          &copy; {new Date().getFullYear()} SBMA Legal Affairs. All rights reserved.
         </div>
       </div>
 
       {/* Right column - Login form (full width on mobile) */}
       <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 lg:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Shield className="h-4 w-4" />
-          </div>
-          <span className="text-lg font-medium">SBMA Legal</span>
+        <div className="flex justify-center items-center gap-3 lg:hidden">
+          <Image
+            src="/sbma-logo.png"
+            alt="SBMA Logo"
+            width={32}
+            height={32}
+            className="rounded"
+          />
+          <span className="text-lg font-medium">SBMA Legal Affairs</span>
         </div>
 
         <div className="flex flex-1 items-center justify-center">
@@ -138,7 +138,7 @@ export default function LoginPage() {
                 <Separator className="my-4" />
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Protected by enterprise-grade security
+                  Authorized personnel only
                 </p>
               </form>
             </CardContent>
