@@ -1,12 +1,12 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiMoreLine,
-} from "@remixicon/react"
+} from "@remixicon/react";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -17,7 +17,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationContent({
@@ -30,17 +30,17 @@ function PaginationContent({
       className={cn("flex items-center gap-1", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationItem({ ...props }: React.ComponentProps<"li">) {
-  return <li data-slot="pagination-item" {...props} />
+  return <li data-slot="pagination-item" {...props} />;
 }
 
 type PaginationLinkProps = {
-  isActive?: boolean
+  isActive?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">
+  React.ComponentProps<"a">;
 
 function PaginationLink({
   className,
@@ -63,7 +63,7 @@ function PaginationLink({
         />
       }
     />
-  )
+  );
 }
 
 function PaginationPrevious({
@@ -81,7 +81,7 @@ function PaginationPrevious({
       <RiArrowLeftSLine data-icon="inline-start" />
       <span className="hidden sm:block">{text}</span>
     </PaginationLink>
-  )
+  );
 }
 
 function PaginationNext({
@@ -99,7 +99,7 @@ function PaginationNext({
       <span className="hidden sm:block">{text}</span>
       <RiArrowRightSLine data-icon="inline-end" />
     </PaginationLink>
-  )
+  );
 }
 
 function PaginationEllipsis({
@@ -119,7 +119,7 @@ function PaginationEllipsis({
       <RiMoreLine />
       <span className="sr-only">More pages</span>
     </span>
-  )
+  );
 }
 
 export {
@@ -130,4 +130,4 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-}
+};

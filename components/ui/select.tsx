@@ -1,12 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Select as SelectPrimitive } from "@base-ui/react/select"
+import * as React from "react";
+import { Select as SelectPrimitive } from "@base-ui/react/select";
 
-import { cn } from "@/lib/utils"
-import { RiArrowDownSLine, RiCheckLine, RiArrowUpSLine } from "@remixicon/react"
+import { cn } from "@/lib/utils";
+import {
+  RiArrowDownSLine,
+  RiCheckLine,
+  RiArrowUpSLine,
+} from "@remixicon/react";
 
-const Select = SelectPrimitive.Root
+const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -15,7 +19,7 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
       className={cn("scroll-my-1.5 p-1.5", className)}
       {...props}
     />
-  )
+  );
 }
 
 function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
@@ -25,7 +29,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
       className={cn("flex flex-1 text-left", className)}
       {...props}
     />
-  )
+  );
 }
 
 function SelectTrigger({
@@ -34,7 +38,7 @@ function SelectTrigger({
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
-  size?: "sm" | "default"
+  size?: "sm" | "default";
 }) {
   return (
     <SelectPrimitive.Trigger
@@ -53,7 +57,7 @@ function SelectTrigger({
         }
       />
     </SelectPrimitive.Trigger>
-  )
+  );
 }
 
 function SelectContent({
@@ -95,7 +99,7 @@ function SelectContent({
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
     </SelectPrimitive.Portal>
-  )
+  );
 }
 
 function SelectLabel({
@@ -108,7 +112,7 @@ function SelectLabel({
       className={cn("px-3 py-2.5 text-xs text-muted-foreground", className)}
       {...props}
     />
-  )
+  );
 }
 
 function SelectItem({
@@ -136,7 +140,7 @@ function SelectItem({
         <RiCheckLine className="pointer-events-none" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
-  )
+  );
 }
 
 function SelectSeparator({
@@ -152,7 +156,7 @@ function SelectSeparator({
       )}
       {...props}
     />
-  )
+  );
 }
 
 function SelectScrollUpButton({
@@ -170,7 +174,7 @@ function SelectScrollUpButton({
     >
       <RiArrowUpSLine />
     </SelectPrimitive.ScrollUpArrow>
-  )
+  );
 }
 
 function SelectScrollDownButton({
@@ -188,7 +192,7 @@ function SelectScrollDownButton({
     >
       <RiArrowDownSLine />
     </SelectPrimitive.ScrollDownArrow>
-  )
+  );
 }
 
 export {
@@ -202,4 +206,4 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-}
+};

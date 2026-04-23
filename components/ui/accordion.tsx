@@ -1,7 +1,7 @@
-import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion"
+import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 
-import { cn } from "@/lib/utils"
-import { RiArrowDownSLine, RiArrowUpSLine } from "@remixicon/react"
+import { cn } from "@/lib/utils";
+import { RiArrowDownSLine, RiArrowUpSLine } from "@remixicon/react";
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
   return (
@@ -13,7 +13,7 @@ function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
@@ -23,7 +23,7 @@ function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
       className={cn("not-last:border-b data-open:bg-muted/50", className)}
       {...props}
     />
-  )
+  );
 }
 
 function AccordionTrigger({
@@ -52,7 +52,7 @@ function AccordionTrigger({
         />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
-  )
+  );
 }
 
 function AccordionContent({
@@ -75,7 +75,7 @@ function AccordionContent({
         {children}
       </div>
     </AccordionPrimitive.Panel>
-  )
+  );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

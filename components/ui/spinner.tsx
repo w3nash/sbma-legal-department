@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils"
-import { RiLoaderLine, type RemixiconComponentType } from "@remixicon/react"
+import { cn } from "@/lib/utils";
+import { RiLoaderLine, type RemixiconComponentType } from "@remixicon/react";
 
 function Spinner({
   className,
@@ -12,7 +12,7 @@ function Spinner({
       className={cn("size-4 animate-spin", className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Spinner }
+export { Spinner };
