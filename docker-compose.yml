@@ -1,0 +1,56 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-sbma}:${POSTGRES_PASSWORD:-sbma}@db:5432/${POSTGRES_DB:-sbmalegal}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=http://localhost:3000
+      - S3_ENDPOINT=http://storage:9000
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-minioadmin}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-minioadmin}
+      - S3_BUCKET=${S3_BUCKET:-sbma-legal}
+      - S3_REGION=${S3_REGION:-ap-southeast-1}
+      - S3_FORCE_PATH_STYLE=true
+      - REDIS_URL=redis://cache:6379
+      - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - storage
+      - cache
+    volumes:
+      - /tmp:/tmp
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sbma}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbma}
+      POSTGRES_DB: ${POSTGRES_DB:-sbmalegal}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  storage:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  cache:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
+  miniodata:
