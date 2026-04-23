@@ -163,7 +163,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#0033A0] hover:bg-[#002a80]"
+                  className="w-full bg-red-600 hover:bg-red-700"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
