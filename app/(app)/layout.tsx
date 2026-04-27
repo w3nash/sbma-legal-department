@@ -5,9 +5,8 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/app/components/AppSidebar";
-import { QueryProvider } from "@/app/components/QueryProvider";
-import { Separator } from "@/components/ui/separator";
+import { AppSidebar } from "@/components/AppSidebar";
+import { QueryProvider } from "@/components/QueryProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

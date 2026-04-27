@@ -1,4 +1,4 @@
-import { QueryProvider } from "@/app/components/QueryProvider";
+import { QueryProvider } from "@/components/QueryProvider";
 
 export default function AuthLayout({
   children,
