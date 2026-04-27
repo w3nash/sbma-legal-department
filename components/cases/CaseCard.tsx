@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RiArrowRightSLine } from "@remixicon/react";
+import { RiArrowRightSLine, RiScales3Line } from "@remixicon/react";
 
 interface CaseCardProps {
   id: string;
@@ -23,136 +23,29 @@ export function LegalFolderIcon({
   className?: string;
 }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 72 60"
-      fill="none"
-      aria-hidden="true"
-    >
-      {/* Folder body */}
-      <path
-        d="M0 18 L0 10 Q0 4 6 4 L26 4 Q32 4 34 10 L37 16 L67 16 Q72 16 72 21 L72 55 Q72 60 67 60 L5 60 Q0 60 0 55 Z"
-        fill="currentColor"
-      />
-      {/* Tab highlight */}
-      <path
-        d="M0 18 L0 10 Q0 4 6 4 L26 4 Q32 4 34 10 L37 16 L0 16 Z"
-        fill="white"
-        fillOpacity="0.12"
-      />
-      {/* Scales watermark — top ornament */}
-      <circle cx="36" cy="26" r="2" fill="white" fillOpacity="0.28" />
-      {/* Pole */}
-      <rect
-        x="35"
-        y="27.5"
-        width="2"
-        height="16"
-        rx="1"
-        fill="white"
-        fillOpacity="0.28"
-      />
-      {/* Beam */}
-      <rect
-        x="22"
-        y="31.5"
-        width="28"
-        height="2"
-        rx="1"
-        fill="white"
-        fillOpacity="0.28"
-      />
-      {/* Base */}
-      <rect
-        x="28"
-        y="45"
-        width="16"
-        height="2"
-        rx="1"
-        fill="white"
-        fillOpacity="0.28"
-      />
-      {/* Left strings */}
-      <line
-        x1="25.5"
-        y1="33"
-        x2="21"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="25.5"
-        y1="33"
-        x2="30"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      {/* Left pan */}
-      <path
-        d="M19 43 Q25.5 50 32 43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
+    <div className={`relative ${className}`}>
+      <svg
+        viewBox="0 0 72 60"
         fill="none"
-        strokeLinecap="round"
+        aria-hidden="true"
+        className="block h-auto w-full"
+      >
+        {/* Folder body */}
+        <path
+          d="M0 18 L0 10 Q0 4 6 4 L26 4 Q32 4 34 10 L37 16 L67 16 Q72 16 72 21 L72 55 Q72 60 67 60 L5 60 Q0 60 0 55 Z"
+          fill="currentColor"
+        />
+        {/* Tab highlight */}
+        <path
+          d="M0 18 L0 10 Q0 4 6 4 L26 4 Q32 4 34 10 L37 16 L0 16 Z"
+          fill="white"
+          fillOpacity="0.12"
+        />
+      </svg>
+      <RiScales3Line
+        className="pointer-events-none absolute top-[62%] left-1/2 h-auto w-[50%] -translate-x-1/2 -translate-y-1/2 text-white opacity-30"
       />
-      <line
-        x1="19"
-        y1="43"
-        x2="32"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      {/* Right strings */}
-      <line
-        x1="46.5"
-        y1="33"
-        x2="42"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="46.5"
-        y1="33"
-        x2="51"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      {/* Right pan */}
-      <path
-        d="M40 43 Q46.5 50 53 43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <line
-        x1="40"
-        y1="43"
-        x2="53"
-        y2="43"
-        stroke="white"
-        strokeOpacity="0.28"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
+    </div>
   );
 }
 
