@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { UserRole, MembershipRole } from "./constants";
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+export const loginSchema = z
+  .object({
+    email: z.email("Invalid email address"),
+    password: z.string().min(1, "Password is required"),
+  })
+  .refine((data) => data.email.trim().length > 0, "Email is required");
 
 export const createUserSchema = z.object({
   email: z.string().email(),

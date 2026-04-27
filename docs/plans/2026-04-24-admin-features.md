@@ -2,38 +2,112 @@
 
 **Goal:** Admin layout guard, user management (list, create, toggle active), audit log viewer with pagination.
 
+**Key dependencies:**
+- `better-auth` v1.6+ with admin plugin (`better-auth/plugins`)
+- `@tanstack/react-form` v1.29+ (Standard Schema support built-in — no adapter needed)
+- `zod` v4 (implements Standard Schema natively)
+- `lib/auth-guards.ts` — use `requireAdmin()` / `requireAuth()` helpers throughout
+- `lib/constants.ts` — `UserRole`, `MembershipRole`, `Route` enums
+- `lib/schemas.ts` — shared Zod schemas
+
+---
+
+## Task 3.0: Add Admin Plugin to BetterAuth
+
+The admin plugin enables `auth.api.createUser()`, `auth.api.listUsers()`, and `auth.api.setRole()` on the server. Without it, user creation requires a two-step `signUpEmail` + `prisma.user.update` workaround.
+
+**Files:**
+- Modify: `lib/auth.ts`
+
+**Step 1: Update auth config**
+
+```typescript
+// lib/auth.ts
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { admin as adminPlugin } from "better-auth/plugins";
+import prisma from "@/lib/prisma";
+import { env } from "@/env";
+import { UserRole } from "./constants";
+
+export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: UserRole.Member,
+        input: false, // prevent users from setting their own role
+      },
+      isActive: {
+        type: "boolean",
+        defaultValue: true,
+        input: false,
+      },
+    },
+  },
+  emailAndPassword: {
+    enabled: true,
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+  },
+  plugins: [adminPlugin()],
+});
+
+// Type-safe session shape including additionalFields
+export type Session = typeof auth.$Infer.Session;
+export type SessionUser = Session["user"];
+```
+
+> **Note on `input: false`:** This prevents users from passing `role` or `isActive` through the sign-up form. Only server-side admin operations can set these fields.
+
+**Step 2: Commit**
+
+```bash
+git add lib/auth.ts
+git commit -m "feat: add better-auth admin plugin and export Session type"
+```
+
 ---
 
 ## Task 3.1: Admin Layout Guard
 
 **Files:**
-- Create: `app/admin/layout.tsx`
+- Modify: `app/(app)/admin/layout.tsx`
 
-**Step 1: Write layout**
+**Step 1: Update layout**
 
 ```tsx
-// app/admin/layout.tsx
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+// app/(app)/admin/layout.tsx
+import { requireAdmin } from "@/lib/auth-guards";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = session?.user as any;
-  if (user?.role !== "admin") redirect("/cases");
-  return <div className="space-y-6">{children}</div>;
+  await requireAdmin(); // redirects to /cases if not admin
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Administration</h1>
+      {children}
+    </div>
+  );
 }
 ```
+
+> **Why `requireAdmin()`?** The guard in `lib/auth-guards.ts` centralises the session check + redirect logic. Inline `auth.api.getSession()` + manual redirect in each layout duplicates this logic and drifts over time.
 
 **Step 2: Commit**
 
 ```bash
-git add app/admin/layout.tsx
-git commit -m "feat: add admin layout guard"
+git add app/\(app\)/admin/layout.tsx
+git commit -m "feat: use requireAdmin guard in admin layout"
 ```
 
 ---
@@ -41,7 +115,7 @@ git commit -m "feat: add admin layout guard"
 ## Task 3.2: Admin Users Page — Table
 
 **Files:**
-- Create: `app/admin/users/page.tsx`
+- Modify: `app/(app)/admin/users/page.tsx`
 
 **Step 1: Install shadcn components**
 
@@ -50,7 +124,7 @@ Run: `npx shadcn@latest add table badge`
 **Step 2: Write users page (server component)**
 
 ```tsx
-// app/admin/users/page.tsx
+// app/(app)/admin/users/page.tsx
 import { prisma } from "@/lib/prisma";
 import {
   Table,
@@ -61,8 +135,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CreateUserForm } from "./_components/CreateUserForm";
-import { ToggleActiveButton } from "./_components/ToggleActiveButton";
+import { CreateUserForm } from "@/components/admin/CreateUserForm";
+import { ToggleActiveButton } from "@/components/admin/ToggleActiveButton";
+import { UserRole } from "@/lib/constants";
 
 export default async function UsersPage() {
   const users = await prisma.user.findMany({
@@ -71,7 +146,7 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Users</h1>
+      <h2 className="text-xl font-semibold">Users</h2>
       <CreateUserForm />
       <Table>
         <TableHeader>
@@ -89,13 +164,13 @@ export default async function UsersPage() {
               <TableCell>{u.name}</TableCell>
               <TableCell>{u.email}</TableCell>
               <TableCell>
-                <Badge variant={u.role === "admin" ? "default" : "secondary"}>
+                <Badge variant={u.role === UserRole.Admin ? "default" : "secondary"}>
                   {u.role}
                 </Badge>
               </TableCell>
               <TableCell>{u.isActive ? "Yes" : "No"}</TableCell>
               <TableCell>
-                <ToggleActiveButton userId={u.id} isActive={u.isActive} />
+                <ToggleActiveButton userId={u.id} isActive={Boolean(u.isActive)} />
               </TableCell>
             </TableRow>
           ))}
@@ -109,7 +184,7 @@ export default async function UsersPage() {
 **Step 3: Commit**
 
 ```bash
-git add app/admin/users/page.tsx
+git add app/\(app\)/admin/users/page.tsx
 git commit -m "feat: add admin users list page"
 ```
 
@@ -118,27 +193,27 @@ git commit -m "feat: add admin users list page"
 ## Task 3.3: Create User Form (TanStack Form + Zod + shadcn)
 
 **Files:**
-- Create: `app/admin/users/_components/CreateUserForm.tsx`
-- Create: `app/admin/users/_actions.ts`
+- Create: `components/admin/CreateUserForm.tsx`
+- Create: `app/(app)/admin/users/_actions.ts`
+
+> **TanStack Form v1 + Zod v4 (Standard Schema):** As of `@tanstack/react-form` v1, Zod schemas implement the Standard Schema spec natively. Pass them directly to `validators: { onBlur: schema }` — no `zodValidator()` adapter or `@tanstack/zod-form-adapter` package needed.
 
 **Step 1: Write Server Action**
 
 ```typescript
-// app/admin/users/_actions.ts
+// app/(app)/admin/users/_actions.ts
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createUserSchema } from "@/lib/schemas";
-import { z } from "zod";
+import { Route } from "@/lib/constants";
 
 export async function createUserAction(formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== "admin") {
-    throw new Error("Unauthorized");
-  }
+  await requireAdmin();
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = createUserSchema.safeParse(raw);
@@ -148,29 +223,43 @@ export async function createUserAction(formData: FormData) {
 
   const { email, name, role, password } = parsed.data;
 
-  await auth.api.signUpEmail({
-    body: { email, name, password },
+  // auth.api.createUser() (admin plugin) creates user + sets role in one step.
+  // Preferred over signUpEmail() + prisma.user.update() — goes through
+  // better-auth's event lifecycle and avoids a race-condition window.
+  // headers() passed so better-auth can verify the caller's admin session internally.
+  await auth.api.createUser({
+    body: { email, name, password, role },
     headers: await headers(),
   });
 
+  revalidatePath(Route.AdminUsers);
+}
+
+export async function toggleUserActive(userId: string, isActive: boolean) {
+  await requireAdmin();
+
   await prisma.user.update({
-    where: { email },
-    data: { role },
+    where: { id: userId },
+    data: { isActive },
   });
 
-  revalidatePath("/admin/users");
+  revalidatePath(Route.AdminUsers);
 }
 ```
 
-**Step 2: Write CreateUserForm**
+**Step 2: Install shadcn Select**
+
+Run: `npx shadcn@latest add select`
+
+**Step 3: Write CreateUserForm**
 
 ```tsx
-// app/admin/users/_components/CreateUserForm.tsx
+// components/admin/CreateUserForm.tsx
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { zodValidator } from "@tanstack/zod-form-adapter";
 import { createUserSchema } from "@/lib/schemas";
+import { UserRole } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -181,19 +270,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createUserAction } from "../_actions";
+import { createUserAction } from "@/app/(app)/admin/users/_actions";
 
 export function CreateUserForm() {
   const form = useForm({
     defaultValues: {
       email: "",
       name: "",
-      role: "member" as "admin" | "member",
+      role: UserRole.Member as typeof UserRole[keyof typeof UserRole],
       password: "",
     },
-    validatorAdapter: zodValidator(),
+    // Standard Schema: pass Zod schema directly — no zodValidator() adapter needed.
+    // onBlur validates when a field loses focus — feedback after the user finishes
+    // typing rather than on every keystroke (onChange) or only at submission (onSubmit).
     validators: {
-      onSubmit: createUserSchema,
+      onBlur: createUserSchema,
     },
     onSubmit: async ({ value }) => {
       const fd = new FormData();
@@ -216,6 +307,7 @@ export function CreateUserForm() {
       className="space-y-4 rounded border p-4"
     >
       <h2 className="font-semibold">Create User</h2>
+
       <form.Field name="email">
         {(field) => (
           <div className="space-y-2">
@@ -223,15 +315,18 @@ export function CreateUserForm() {
             <Input
               id={field.name}
               name={field.name}
+              type="email"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            {field.state.meta.errors ? (
+            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
               <p className="text-sm text-red-500">
-                {field.state.meta.errors.join(", ")}
+                {field.state.meta.errors
+                  .map((e) => (typeof e === "string" ? e : e.message))
+                  .join(", ")}
               </p>
-            ) : null}
+            )}
           </div>
         )}
       </form.Field>
@@ -247,11 +342,13 @@ export function CreateUserForm() {
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            {field.state.meta.errors ? (
+            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
               <p className="text-sm text-red-500">
-                {field.state.meta.errors.join(", ")}
+                {field.state.meta.errors
+                  .map((e) => (typeof e === "string" ? e : e.message))
+                  .join(", ")}
               </p>
-            ) : null}
+            )}
           </div>
         )}
       </form.Field>
@@ -259,17 +356,19 @@ export function CreateUserForm() {
       <form.Field name="role">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Role</Label>
+            <Label>Role</Label>
             <Select
               value={field.state.value}
-              onValueChange={(v) => field.handleChange(v as "admin" | "member")}
+              onValueChange={(v) =>
+                field.handleChange(v as typeof UserRole[keyof typeof UserRole])
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value={UserRole.Member}>Member</SelectItem>
+                <SelectItem value={UserRole.Admin}>Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -288,19 +387,23 @@ export function CreateUserForm() {
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            {field.state.meta.errors ? (
+            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
               <p className="text-sm text-red-500">
-                {field.state.meta.errors.join(", ")}
+                {field.state.meta.errors
+                  .map((e) => (typeof e === "string" ? e : e.message))
+                  .join(", ")}
               </p>
-            ) : null}
+            )}
           </div>
         )}
       </form.Field>
 
-      <form.Subscribe>
-        {(state) => (
-          <Button type="submit" disabled={!state.canSubmit || state.isSubmitting}>
-            {state.isSubmitting ? "Creating..." : "Create User"}
+      <form.Subscribe
+        selector={(state) => [state.canSubmit, state.isSubmitting] as const}
+      >
+        {([canSubmit, isSubmitting]) => (
+          <Button type="submit" disabled={!canSubmit || isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create User"}
           </Button>
         )}
       </form.Subscribe>
@@ -309,51 +412,28 @@ export function CreateUserForm() {
 }
 ```
 
-**Step 3: Install shadcn Select**
-
-Run: `npx shadcn@latest add select`
+> **`form.Subscribe` with `selector`:** Providing a `selector` limits re-renders to only when `canSubmit` or `isSubmitting` changes, rather than on every keystroke. This is the idiomatic v1 pattern.
 
 **Step 4: Commit**
 
 ```bash
-git add app/admin/users/_components/CreateUserForm.tsx app/admin/users/_actions.ts
-git commit -m "feat: add admin create user form with TanStack Form + Zod"
+git add components/admin/CreateUserForm.tsx app/\(app\)/admin/users/_actions.ts
+git commit -m "feat: add admin create user form with TanStack Form + Zod Standard Schema"
 ```
 
 ---
 
-## Task 3.4: Toggle User Active
+## Task 3.4: Toggle User Active Button
 
 **Files:**
-- Create: `app/admin/users/_components/ToggleActiveButton.tsx`
-
-**Step 1: Write toggle action (add to _actions.ts)**
-
-```typescript
-// app/admin/users/_actions.ts
-export async function toggleUserActive(userId: string, isActive: boolean) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== "admin") {
-    throw new Error("Unauthorized");
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { isActive },
-  });
-
-  revalidatePath("/admin/users");
-}
-```
-
-**Step 2: Write ToggleActiveButton**
+- Create: `components/admin/ToggleActiveButton.tsx`
 
 ```tsx
-// app/admin/users/_components/ToggleActiveButton.tsx
+// components/admin/ToggleActiveButton.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { toggleUserActive } from "../_actions";
+import { toggleUserActive } from "@/app/(app)/admin/users/_actions";
 
 export function ToggleActiveButton({
   userId,
@@ -376,10 +456,10 @@ export function ToggleActiveButton({
 }
 ```
 
-**Step 3: Commit**
+**Commit**
 
 ```bash
-git add app/admin/users/_components/ToggleActiveButton.tsx app/admin/users/_actions.ts
+git add components/admin/ToggleActiveButton.tsx
 git commit -m "feat: add toggle user active button"
 ```
 
@@ -388,7 +468,7 @@ git commit -m "feat: add toggle user active button"
 ## Task 3.5: Audit Logs Page
 
 **Files:**
-- Create: `app/admin/audit-logs/page.tsx`
+- Create: `app/(app)/admin/audit-logs/page.tsx`
 
 **Step 1: Install shadcn Pagination**
 
@@ -397,7 +477,7 @@ Run: `npx shadcn@latest add pagination`
 **Step 2: Write audit logs page**
 
 ```tsx
-// app/admin/audit-logs/page.tsx
+// app/(app)/admin/audit-logs/page.tsx
 import { prisma } from "@/lib/prisma";
 import {
   Table,
@@ -442,7 +522,7 @@ export default async function AuditLogsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Audit Logs</h1>
+      <h2 className="text-xl font-semibold">Audit Logs</h2>
       <Table>
         <TableHeader>
           <TableRow>
@@ -499,6 +579,6 @@ export default async function AuditLogsPage({
 **Step 3: Commit**
 
 ```bash
-git add app/admin/audit-logs
+git add app/\(app\)/admin/audit-logs
 git commit -m "feat: add audit log viewer with pagination"
 ```

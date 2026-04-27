@@ -9,23 +9,16 @@
 **Files:**
 - Create: `lib/__tests__/upload.integration.test.ts`
 
-**Step 1: Write test**
-
 ```typescript
 // lib/__tests__/upload.integration.test.ts
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "../prisma";
-import { s3Client, BUCKET_NAME } from "../s3";
-import { encryptFile, decryptFile, encryptKey, decryptKey, generateFileKey } from "../crypto";
-import { addWatermark } from "../watermark";
-import { convertToPDF } from "../convert";
+import { describe, it, expect } from "vitest";
+import { s3Client, BUCKET_NAME } from "@/lib/s3";
+import { encryptFile, decryptFile, encryptKey, decryptKey, generateFileKey } from "@/lib/crypto";
+import { addWatermark } from "@/lib/watermark";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import fs from "fs/promises";
-import os from "os";
-import path from "path";
 
 describe("upload integration", () => {
-  it("converts, encrypts, stores, retrieves, and decrypts a document", async () => {
+  it("encrypts, stores, retrieves, and decrypts a document", async () => {
     const pdfBuffer = Buffer.from("%PDF-1.4 fake pdf content");
     const key = generateFileKey();
     const encrypted = encryptFile(pdfBuffer, key);
@@ -57,12 +50,12 @@ describe("upload integration", () => {
 });
 ```
 
-**Step 2: Run tests**
+**Run tests**
 
-Run: `bun test`
+Run: `bun run test`
 Expected: PASS
 
-**Step 3: Commit**
+**Commit**
 
 ```bash
 git add lib/__tests__/upload.integration.test.ts
@@ -76,42 +69,41 @@ git commit -m "test: add upload integration tests"
 **Files:**
 - Create: `lib/__tests__/permissions.integration.test.ts`
 
-**Step 1: Write test**
-
 ```typescript
 // lib/__tests__/permissions.integration.test.ts
 import { describe, it, expect } from "vitest";
-import { canViewCase, canUploadToCase, canManageCase } from "../permissions";
+import { canViewCase, canUploadToCase, canManageCase } from "@/lib/permissions";
+import { UserRole, MembershipRole } from "@/lib/constants";
 
-describe("permissions integration", () => {
+describe("permissions", () => {
   it("admin can do everything", () => {
-    expect(canViewCase({ role: "admin" }, null)).toBe(true);
-    expect(canUploadToCase({ role: "admin" }, null)).toBe(true);
-    expect(canManageCase({ role: "admin" })).toBe(true);
+    expect(canViewCase({ role: UserRole.Admin }, null)).toBe(true);
+    expect(canUploadToCase({ role: UserRole.Admin }, null)).toBe(true);
+    expect(canManageCase({ role: UserRole.Admin })).toBe(true);
   });
 
   it("member without membership cannot view", () => {
-    expect(canViewCase({ role: "member" }, null)).toBe(false);
+    expect(canViewCase({ role: UserRole.Member }, null)).toBe(false);
   });
 
   it("viewer can view but not upload", () => {
-    expect(canViewCase({ role: "member" }, { role: "viewer" })).toBe(true);
-    expect(canUploadToCase({ role: "member" }, { role: "viewer" })).toBe(false);
+    expect(canViewCase({ role: UserRole.Member }, { role: MembershipRole.Viewer })).toBe(true);
+    expect(canUploadToCase({ role: UserRole.Member }, { role: MembershipRole.Viewer })).toBe(false);
   });
 
   it("uploader can view and upload", () => {
-    expect(canViewCase({ role: "member" }, { role: "uploader" })).toBe(true);
-    expect(canUploadToCase({ role: "member" }, { role: "uploader" })).toBe(true);
+    expect(canViewCase({ role: UserRole.Member }, { role: MembershipRole.Uploader })).toBe(true);
+    expect(canUploadToCase({ role: UserRole.Member }, { role: MembershipRole.Uploader })).toBe(true);
   });
 });
 ```
 
-**Step 2: Run tests**
+**Run tests**
 
-Run: `bun test`
+Run: `bun run test`
 Expected: PASS
 
-**Step 3: Commit**
+**Commit**
 
 ```bash
 git add lib/__tests__/permissions.integration.test.ts
@@ -125,12 +117,11 @@ git commit -m "test: add permission integration tests"
 **Files:**
 - Create: `app/not-found.tsx`
 
-**Step 1: Write page**
-
 ```tsx
 // app/not-found.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Route } from "@/lib/constants";
 
 export default function NotFound() {
   return (
@@ -138,14 +129,14 @@ export default function NotFound() {
       <h1 className="text-4xl font-bold">404</h1>
       <p className="text-muted-foreground">Page not found.</p>
       <Button asChild>
-        <Link href="/cases">Back to Cases</Link>
+        <Link href={Route.Cases}>Back to Cases</Link>
       </Button>
     </div>
   );
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
 git add app/not-found.tsx
@@ -175,50 +166,40 @@ git commit -m "chore: fix types and lint issues"
 
 ---
 
-## Task 7.5: Optional Seed Script
+## Task 7.5: Seed Script
 
 **Files:**
-- Create: `prisma/seed.ts`
+- Modify: `prisma/seed.ts`
 
-**Step 1: Write seed**
+> Use `auth.api.createUser()` so the password is properly hashed through better-auth's pipeline rather than inserting a raw record via Prisma.
 
 ```typescript
 // prisma/seed.ts
-import { prisma } from "../lib/prisma";
+import { auth } from "../lib/auth";
+import { UserRole } from "../lib/constants";
 
 async function main() {
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await auth.api.createUser({
+    body: {
       email: "admin@sbma.legal",
       name: "System Admin",
-      role: "admin",
-      isActive: true,
+      password: process.env.SEED_ADMIN_PASSWORD ?? "changeme123",
+      role: UserRole.Admin,
     },
   });
-  console.log("Created admin user:", admin.id);
+  console.log("Created admin user:", admin.user.id);
 }
 
 main()
   .catch((e) => {
     console.error(e);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });
 ```
 
-**Step 2: Add seed script to package.json**
-
-```json
-"prisma": {
-  "seed": "tsx prisma/seed.ts"
-}
-```
-
-**Step 3: Commit**
+**Commit**
 
 ```bash
-git add prisma/seed.ts package.json
-git commit -m "chore: add optional Prisma seed script"
+git add prisma/seed.ts
+git commit -m "chore: update seed script to use auth.api.createUser"
 ```

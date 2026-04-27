@@ -1,12 +1,13 @@
-// app/login/page.tsx
+// app/(auth)/login/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useForm } from "@tanstack/react-form";
 import { signIn, useSession } from "@/lib/auth-client";
 import { Route } from "@/lib/constants";
+import { loginSchema } from "@/lib/schemas";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,10 +18,7 @@ import { RiErrorWarningLine } from "@remixicon/react";
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     if (session) {
@@ -29,26 +27,23 @@ export default function LoginPage() {
     }
   }, [session, router]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    const result = await signIn.email({
-      email,
-      password,
-      callbackURL: Route.Cases,
-    });
-
-    setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error.message || "Invalid credentials");
-    } else {
-      router.push(Route.Cases);
-      router.refresh();
-    }
-  }
+  const form = useForm({
+    defaultValues: { email: "", password: "" },
+    onSubmit: async ({ value }) => {
+      setApiError("");
+      const result = await signIn.email({
+        email: value.email,
+        password: value.password,
+        callbackURL: Route.Cases,
+      });
+      if (result.error) {
+        setApiError(result.error.message || "Invalid credentials");
+      } else {
+        router.push(Route.Cases);
+        router.refresh();
+      }
+    },
+  });
 
   if (isPending) {
     return (
@@ -130,48 +125,91 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit();
+              }}
+              className="space-y-4"
+            >
+              {apiError && (
                 <Alert variant="destructive" role="alert">
                   <RiErrorWarningLine className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{apiError}</AlertDescription>
                 </Alert>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href={Route.ForgotPassword}
-                    className="text-sm text-muted-foreground hover:text-primary"
+
+              <form.Field
+                name="email"
+                validators={{
+                  onBlur: loginSchema.shape.email,
+                }}
+              >
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor={field.name}>Email</Label>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="name@company.com"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      disabled={form.state.isSubmitting}
+                    />
+                    {field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0 && (
+                        <p className="text-sm text-destructive">
+                          {field.state.meta.errors[0]?.message}
+                        </p>
+                      )}
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Field
+                name="password"
+                validators={{
+                  onBlur: loginSchema.shape.password,
+                }}
+              >
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor={field.name}>Password</Label>
+                    <Input
+                      id={field.name}
+                      type="password"
+                      placeholder="Enter your password"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      disabled={form.state.isSubmitting}
+                    />
+                    {field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0 && (
+                        <p className="text-sm text-destructive">
+                          {field.state.meta.errors[0]?.message}
+                        </p>
+                      )}
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Subscribe
+                selector={(state) =>
+                  [state.canSubmit, state.isSubmitting] as const
+                }
+              >
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!canSubmit || isSubmitting}
                   >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Authenticating..." : "Sign In"}
-              </Button>
+                    {isSubmitting ? "Authenticating..." : "Sign In"}
+                  </Button>
+                )}
+              </form.Subscribe>
 
               <Separator className="my-4" />
 

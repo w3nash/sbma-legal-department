@@ -2,31 +2,32 @@
 
 **Goal:** Case CRUD, case detail with document list, case member management.
 
+**Key dependencies:**
+- `lib/auth-guards.ts` — use `requireAuth()` / `requireAdmin()` helpers throughout
+- `lib/constants.ts` — `UserRole`, `MembershipRole`, `Route` enums
+- `lib/permissions.ts` — `canViewCase`, `canUploadToCase`, `canManageCase`
+- `lib/schemas.ts` — `createCaseSchema`, `addMemberSchema`
+- Components go in `components/cases/` and import via `@/components/cases/`
+
 ---
 
-## Task 4.1: Create Case Form + Server Action
+## Task 4.1: Case Server Actions
 
 **Files:**
-- Create: `app/cases/_actions.ts`
-- Create: `app/cases/new/page.tsx`
-
-**Step 1: Write Server Action**
+- Create: `app/(app)/cases/_actions.ts`
 
 ```typescript
-// app/cases/_actions.ts
+// app/(app)/cases/_actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth, requireAdmin } from "@/lib/auth-guards";
 import { revalidatePath } from "next/cache";
 import { createCaseSchema, addMemberSchema } from "@/lib/schemas";
+import { Route } from "@/lib/constants";
 
 export async function createCaseAction(formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== "admin") {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireAdmin();
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = createCaseSchema.safeParse(raw);
@@ -41,15 +42,12 @@ export async function createCaseAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/cases");
+  revalidatePath(Route.Cases);
   return c;
 }
 
 export async function addCaseMember(caseId: string, formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== "admin") {
-    throw new Error("Unauthorized");
-  }
+  await requireAdmin();
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = addMemberSchema.safeParse({ ...raw, caseId });
@@ -65,45 +63,54 @@ export async function addCaseMember(caseId: string, formData: FormData) {
 }
 
 export async function removeCaseMember(caseId: string, userId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== "admin") {
-    throw new Error("Unauthorized");
-  }
-
+  await requireAdmin();
   await prisma.caseMember.deleteMany({ where: { caseId, userId } });
   revalidatePath(`/cases/${caseId}`);
 }
 ```
 
-**Step 2: Write Create Case Page**
+**Commit**
+
+```bash
+git add app/\(app\)/cases/_actions.ts
+git commit -m "feat: add case server actions"
+```
+
+---
+
+## Task 4.2: Create Case Page
+
+**Files:**
+- Create: `app/(app)/cases/new/page.tsx`
+
+> **TanStack Form v1 + Zod v4 (Standard Schema):** Pass Zod schemas directly to `validators: { onBlur: schema }` — no `zodValidator()` adapter needed.
 
 ```tsx
-// app/cases/new/page.tsx
+// app/(app)/cases/new/page.tsx
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { zodValidator } from "@tanstack/zod-form-adapter";
 import { createCaseSchema } from "@/lib/schemas";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createCaseAction } from "../_actions";
+import { createCaseAction } from "@/app/(app)/cases/_actions";
 import { useRouter } from "next/navigation";
+import { Route } from "@/lib/constants";
 
 export default function NewCasePage() {
   const router = useRouter();
   const form = useForm({
     defaultValues: { title: "", caseNumber: "", description: "" },
-    validatorAdapter: zodValidator(),
-    validators: { onSubmit: createCaseSchema },
+    validators: { onBlur: createCaseSchema },
     onSubmit: async ({ value }) => {
       const fd = new FormData();
       fd.append("title", value.title);
       if (value.caseNumber) fd.append("caseNumber", value.caseNumber);
       if (value.description) fd.append("description", value.description);
       await createCaseAction(fd);
-      router.push("/cases");
+      router.push(Route.Cases);
     },
   });
 
@@ -128,11 +135,15 @@ export default function NewCasePage() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-              {field.state.meta.errors ? (
+              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-red-500">
-                  {field.state.meta.errors.join(", ")}
+                  {field.state.meta.errors
+                    .map((e) => (typeof e === "string" ? e : e.message))
+                    .join(", ")}
                 </p>
-              ) : null}
+              )}
+                </p>
+              )}
             </div>
           )}
         </form.Field>
@@ -167,10 +178,12 @@ export default function NewCasePage() {
           )}
         </form.Field>
 
-        <form.Subscribe>
-          {(state) => (
-            <Button type="submit" disabled={!state.canSubmit || state.isSubmitting}>
-              {state.isSubmitting ? "Creating..." : "Create Case"}
+        <form.Subscribe
+          selector={(state) => [state.canSubmit, state.isSubmitting] as const}
+        >
+          {([canSubmit, isSubmitting]) => (
+            <Button type="submit" disabled={!canSubmit || isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Case"}
             </Button>
           )}
         </form.Subscribe>
@@ -180,29 +193,29 @@ export default function NewCasePage() {
 }
 ```
 
-**Step 3: Install Textarea**
+**Install Textarea**
 
 Run: `npx shadcn@latest add textarea`
 
-**Step 4: Commit**
+**Commit**
 
 ```bash
-git add app/cases/_actions.ts app/cases/new
-git commit -m "feat: add case creation form and server action"
+git add app/\(app\)/cases/new/page.tsx
+git commit -m "feat: add case creation page with TanStack Form + Zod Standard Schema"
 ```
 
 ---
 
-## Task 4.2: Case List Page
+## Task 4.3: Case List Page + CaseCard Component
 
 **Files:**
-- Create: `app/cases/page.tsx`
-- Create: `app/cases/_components/CaseCard.tsx`
+- Create: `app/(app)/cases/page.tsx`
+- Create: `components/cases/CaseCard.tsx`
 
 **Step 1: Write CaseCard**
 
 ```tsx
-// app/cases/_components/CaseCard.tsx
+// components/cases/CaseCard.tsx
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -247,23 +260,20 @@ export function CaseCard({
 **Step 2: Write Cases Page**
 
 ```tsx
-// app/cases/page.tsx
+// app/(app)/cases/page.tsx
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { CaseCard } from "./_components/CaseCard";
+import { requireAuth } from "@/lib/auth-guards";
+import { UserRole, Route } from "@/lib/constants";
+import { CaseCard } from "@/components/cases/CaseCard";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function CasesPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect("/login");
-
-  const user = session.user as any;
-  const isAdmin = user.role === "admin";
+  const session = await requireAuth();
+  const isAdmin = session.user.role === UserRole.Admin;
 
   const cases = await prisma.case.findMany({
-    where: isAdmin ? undefined : { members: { some: { userId: user.id } } },
+    where: isAdmin ? undefined : { members: { some: { userId: session.user.id } } },
     include: { _count: { select: { documents: true } } },
     orderBy: { createdAt: "desc" },
   });
@@ -274,7 +284,7 @@ export default async function CasesPage() {
         <h1 className="text-2xl font-bold">Cases</h1>
         {isAdmin && (
           <Button asChild>
-            <a href="/cases/new">New Case</a>
+            <Link href="/cases/new">New Case</Link>
           </Button>
         )}
       </div>
@@ -295,32 +305,31 @@ export default async function CasesPage() {
 }
 ```
 
-**Step 3: Commit**
+**Commit**
 
 ```bash
-git add app/cases/page.tsx app/cases/_components/CaseCard.tsx
-git commit -m "feat: add case list page with cards"
+git add app/\(app\)/cases/page.tsx components/cases/CaseCard.tsx
+git commit -m "feat: add case list page and CaseCard component"
 ```
 
 ---
 
-## Task 4.3: Case Detail Page
+## Task 4.4: Case Detail Page
 
 **Files:**
-- Create: `app/cases/[caseId]/page.tsx`
-
-**Step 1: Write page**
+- Create: `app/(app)/cases/[caseId]/page.tsx`
 
 ```tsx
-// app/cases/[caseId]/page.tsx
+// app/(app)/cases/[caseId]/page.tsx
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-guards";
 import { redirect, notFound } from "next/navigation";
 import { canViewCase, canUploadToCase, canManageCase } from "@/lib/permissions";
-import { DocumentList } from "./_components/DocumentList";
-import { CaseMemberManager } from "./_components/CaseMemberManager";
+import { UserRole } from "@/lib/constants";
+import { DocumentList } from "@/components/cases/DocumentList";
+import { CaseMemberManager } from "@/components/cases/CaseMemberManager";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function CaseDetailPage({
   params,
@@ -328,10 +337,9 @@ export default async function CaseDetailPage({
   params: Promise<{ caseId: string }>;
 }) {
   const { caseId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect("/login");
+  const session = await requireAuth();
+  const user = session.user;
 
-  const user = session.user as any;
   const c = await prisma.case.findUnique({
     where: { id: caseId },
     include: {
@@ -375,7 +383,7 @@ export default async function CaseDetailPage({
         <h2 className="text-lg font-semibold">Documents</h2>
         {(isAdmin || canUpload) && (
           <Button asChild>
-            <a href={`/cases/${caseId}/upload`}>Upload Document</a>
+            <Link href={`/cases/${caseId}/upload`}>Upload Document</Link>
           </Button>
         )}
       </div>
@@ -394,24 +402,22 @@ export default async function CaseDetailPage({
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/page.tsx
+git add app/\(app\)/cases/\[caseId\]/page.tsx
 git commit -m "feat: add case detail page with permission checks"
 ```
 
 ---
 
-## Task 4.4: Document List Component
+## Task 4.5: DocumentList Component
 
 **Files:**
-- Create: `app/cases/[caseId]/_components/DocumentList.tsx`
-
-**Step 1: Write component**
+- Create: `components/cases/DocumentList.tsx`
 
 ```tsx
-// app/cases/[caseId]/_components/DocumentList.tsx
+// components/cases/DocumentList.tsx
 import Link from "next/link";
 import {
   Table,
@@ -479,28 +485,26 @@ function formatBytes(bytes: number): string {
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/_components/DocumentList.tsx
-git commit -m "feat: add document list component"
+git add components/cases/DocumentList.tsx
+git commit -m "feat: add DocumentList component"
 ```
 
 ---
 
-## Task 4.5: Case Member Manager
+## Task 4.6: CaseMemberManager Component
 
 **Files:**
-- Create: `app/cases/[caseId]/_components/CaseMemberManager.tsx`
-
-**Step 1: Write component**
+- Create: `components/cases/CaseMemberManager.tsx`
 
 ```tsx
-// app/cases/[caseId]/_components/CaseMemberManager.tsx
+// components/cases/CaseMemberManager.tsx
 "use client";
 
 import { useState } from "react";
-import { addCaseMember, removeCaseMember } from "../../_actions";
+import { addCaseMember, removeCaseMember } from "@/app/(app)/cases/_actions";
 import {
   Select,
   SelectContent,
@@ -517,6 +521,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MembershipRole } from "@/lib/constants";
 
 interface Member {
   id: string;
@@ -540,7 +545,9 @@ export function CaseMemberManager({
   allUsers: User[];
 }) {
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<"viewer" | "uploader">("viewer");
+  const [role, setRole] = useState<typeof MembershipRole[keyof typeof MembershipRole]>(
+    MembershipRole.Viewer
+  );
 
   const availableUsers = allUsers.filter(
     (u) => !members.some((m) => m.user.id === u.id)
@@ -562,18 +569,22 @@ export function CaseMemberManager({
             ))}
           </SelectContent>
         </Select>
+
         <Select
           value={role}
-          onValueChange={(v) => setRole(v as "viewer" | "uploader")}
+          onValueChange={(v) =>
+            setRole(v as typeof MembershipRole[keyof typeof MembershipRole])
+          }
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="viewer">Viewer</SelectItem>
-            <SelectItem value="uploader">Uploader</SelectItem>
+            <SelectItem value={MembershipRole.Viewer}>Viewer</SelectItem>
+            <SelectItem value={MembershipRole.Uploader}>Uploader</SelectItem>
           </SelectContent>
         </Select>
+
         <Button
           onClick={() => {
             const fd = new FormData();
@@ -621,9 +632,9 @@ export function CaseMemberManager({
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/_components/CaseMemberManager.tsx
-git commit -m "feat: add case member manager with add/remove"
+git add components/cases/CaseMemberManager.tsx
+git commit -m "feat: add CaseMemberManager component"
 ```

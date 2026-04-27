@@ -2,14 +2,14 @@
 
 **Goal:** Viewer API route (cached viewer copy), download API route (unique watermark + rate limit), document viewer page with iframe.
 
+**Note:** `request.ip` is deprecated in newer Next.js — use `request.headers.get("x-forwarded-for")` instead.
+
 ---
 
 ## Task 6.1: Viewer API Route
 
 **Files:**
 - Create: `app/api/documents/[documentId]/viewer/route.ts`
-
-**Step 1: Write route**
 
 ```typescript
 // app/api/documents/[documentId]/viewer/route.ts
@@ -31,7 +31,7 @@ export async function GET(
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
 
-  const user = session.user as any;
+  const user = session.user;
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
     include: { case: { include: { members: true } } },
@@ -52,10 +52,7 @@ export async function GET(
     pdfBuffer = Buffer.from(cached, "base64");
   } else {
     const s3Res = await s3Client.send(
-      new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: doc.storedViewerKey,
-      })
+      new GetObjectCommand({ Bucket: BUCKET_NAME, Key: doc.storedViewerKey })
     );
     const encrypted = Buffer.from(await s3Res.Body!.transformToByteArray());
     const fileKey = decryptKey(doc.encryptionKey);
@@ -68,8 +65,8 @@ export async function GET(
     userId: user.id,
     documentId: doc.id,
     caseId: doc.caseId,
-    ipAddress: request.ip || request.headers.get("x-forwarded-for") || undefined,
-    userAgent: request.headers.get("user-agent") || undefined,
+    ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
+    userAgent: request.headers.get("user-agent") ?? undefined,
   });
 
   return new NextResponse(pdfBuffer, {
@@ -81,10 +78,10 @@ export async function GET(
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/api/documents
+git add app/api/documents/\[documentId\]/viewer/route.ts
 git commit -m "feat: add viewer API route with Redis caching and audit logging"
 ```
 
@@ -94,8 +91,6 @@ git commit -m "feat: add viewer API route with Redis caching and audit logging"
 
 **Files:**
 - Create: `app/api/documents/[documentId]/download/route.ts`
-
-**Step 1: Write route**
 
 ```typescript
 // app/api/documents/[documentId]/download/route.ts
@@ -121,7 +116,7 @@ export async function GET(
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
 
-  const user = session.user as any;
+  const user = session.user;
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
     include: { case: { include: { members: true } } },
@@ -143,16 +138,13 @@ export async function GET(
   }
 
   const s3Res = await s3Client.send(
-    new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: doc.storedOriginalKey,
-    })
+    new GetObjectCommand({ Bucket: BUCKET_NAME, Key: doc.storedOriginalKey })
   );
   const encrypted = Buffer.from(await s3Res.Body!.transformToByteArray());
   const fileKey = decryptKey(doc.encryptionKey);
   const pdfBuffer = decryptFile(encrypted, fileKey);
 
-  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
   const timestamp = new Date().toISOString();
   const watermark = `Control Number: ${doc.controlNumber} | Name: ${user.name} | Email: ${user.email} | IP: ${ip} | Timestamp: ${timestamp}`;
   const watermarkedPdf = await addWatermark(pdfBuffer, watermark);
@@ -162,8 +154,8 @@ export async function GET(
     userId: user.id,
     documentId: doc.id,
     caseId: doc.caseId,
-    ipAddress: typeof ip === "string" ? ip : undefined,
-    userAgent: request.headers.get("user-agent") || undefined,
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? undefined,
   });
 
   return new NextResponse(watermarkedPdf, {
@@ -175,10 +167,10 @@ export async function GET(
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/api/documents
+git add app/api/documents/\[documentId\]/download/route.ts
 git commit -m "feat: add download API route with unique watermark and rate limiting"
 ```
 
@@ -187,20 +179,18 @@ git commit -m "feat: add download API route with unique watermark and rate limit
 ## Task 6.3: Document Viewer Page
 
 **Files:**
-- Create: `app/cases/[caseId]/documents/[documentId]/page.tsx`
-
-**Step 1: Write page**
+- Create: `app/(app)/cases/[caseId]/documents/[documentId]/page.tsx`
 
 ```tsx
-// app/cases/[caseId]/documents/[documentId]/page.tsx
+// app/(app)/cases/[caseId]/documents/[documentId]/page.tsx
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-guards";
 import { redirect, notFound } from "next/navigation";
 import { canViewCase } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 export default async function DocumentViewerPage({
   params,
@@ -208,10 +198,9 @@ export default async function DocumentViewerPage({
   params: Promise<{ caseId: string; documentId: string }>;
 }) {
   const { caseId, documentId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect("/login");
+  const session = await requireAuth();
+  const user = session.user;
 
-  const user = session.user as any;
   const doc = await prisma.document.findUnique({
     where: { id: documentId, caseId },
     include: { case: { include: { members: true } } },
@@ -238,7 +227,7 @@ export default async function DocumentViewerPage({
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Button asChild>
-            <a href={downloadUrl}>Download</a>
+            <Link href={downloadUrl}>Download</Link>
           </Button>
         </CardContent>
       </Card>
@@ -257,9 +246,9 @@ export default async function DocumentViewerPage({
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/documents
+git add app/\(app\)/cases/\[caseId\]/documents/\[documentId\]/page.tsx
 git commit -m "feat: add document viewer page with iframe and download button"
 ```

@@ -2,14 +2,14 @@
 
 **Goal:** Upload any file format, auto-convert to PDF, encrypt, store in S3, cache viewer copy in Redis, write audit log.
 
+**Note:** `pdf-lib` and `uuid` are already in `package.json` — no install needed.
+
 ---
 
 ## Task 5.1: File Conversion Helper
 
 **Files:**
 - Create: `lib/convert.ts`
-
-**Step 1: Write implementation**
 
 ```typescript
 // lib/convert.ts
@@ -60,7 +60,7 @@ export async function convertToPDF(inputPath: string, mimeType: string): Promise
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
 git add lib/convert.ts
@@ -75,17 +75,12 @@ git commit -m "feat: add LibreOffice-to-PDF conversion helper"
 - Create: `lib/watermark.ts`
 - Create: `lib/__tests__/watermark.test.ts`
 
-**Step 1: Install pdf-lib**
-
-Run: `bun add pdf-lib`
-Run: `bun add -D @types/pdf-lib`
-
-**Step 2: Write failing test**
+**Step 1: Write failing test**
 
 ```typescript
 // lib/__tests__/watermark.test.ts
 import { describe, it, expect } from "vitest";
-import { addWatermark } from "../watermark";
+import { addWatermark } from "@/lib/watermark";
 import { PDFDocument } from "pdf-lib";
 
 describe("watermark", () => {
@@ -104,12 +99,12 @@ describe("watermark", () => {
 });
 ```
 
-**Step 3: Run (expect fail)**
+**Step 2: Run (expect fail)**
 
-Run: `bun test lib/__tests__/watermark.test.ts`
+Run: `bun run test lib/__tests__/watermark.test.ts`
 Expected: FAIL
 
-**Step 4: Write implementation**
+**Step 3: Write implementation**
 
 ```typescript
 // lib/watermark.ts
@@ -135,15 +130,15 @@ export async function addWatermark(pdfBuffer: Buffer, text: string): Promise<Buf
 }
 ```
 
-**Step 5: Run (expect pass)**
+**Step 4: Run (expect pass)**
 
-Run: `bun test lib/__tests__/watermark.test.ts`
+Run: `bun run test lib/__tests__/watermark.test.ts`
 Expected: PASS
 
-**Step 6: Commit**
+**Commit**
 
 ```bash
-git add lib/watermark.ts lib/__tests__/watermark.test.ts package.json
+git add lib/watermark.ts lib/__tests__/watermark.test.ts
 git commit -m "feat: add PDF watermark helper with tests"
 ```
 
@@ -152,22 +147,14 @@ git commit -m "feat: add PDF watermark helper with tests"
 ## Task 5.3: Upload Server Action
 
 **Files:**
-- Create: `app/cases/[caseId]/upload/_actions.ts`
-
-**Step 1: Install uuid**
-
-Run: `bun add uuid`
-Run: `bun add -D @types/uuid`
-
-**Step 2: Write action**
+- Create: `app/(app)/cases/[caseId]/upload/_actions.ts`
 
 ```typescript
-// app/cases/[caseId]/upload/_actions.ts
+// app/(app)/cases/[caseId]/upload/_actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-guards";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { redis } from "@/lib/redis";
 import { encryptFile, encryptKey, generateFileKey } from "@/lib/crypto";
@@ -177,15 +164,15 @@ import { logAudit } from "@/lib/audit";
 import { canUploadToCase } from "@/lib/permissions";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
+import { headers } from "next/headers";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
 export async function uploadDocument(caseId: string, formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
+  const session = await requireAuth();
+  const user = session.user;
 
-  const user = session.user as any;
   const membership = await prisma.caseMember.findUnique({
     where: { caseId_userId: { caseId, userId: user.id } },
   });
@@ -208,7 +195,6 @@ export async function uploadDocument(caseId: string, formData: FormData) {
     const fileKey = generateFileKey();
     const encryptedKey = encryptKey(fileKey);
 
-    // Encrypt and store original
     const encryptedOriginal = encryptFile(pdfBuffer, fileKey);
     const originalKey = `documents/${caseId}/${controlNumber}/original.enc`;
     await s3Client.send(
@@ -219,9 +205,7 @@ export async function uploadDocument(caseId: string, formData: FormData) {
       })
     );
 
-    // Generate and store viewer copy
-    const viewerWatermark = `Control Number: ${controlNumber}`;
-    const viewerPdf = await addWatermark(pdfBuffer, viewerWatermark);
+    const viewerPdf = await addWatermark(pdfBuffer, `Control Number: ${controlNumber}`);
     const encryptedViewer = encryptFile(viewerPdf, fileKey);
     const viewerKey = `documents/${caseId}/${controlNumber}/viewer.enc`;
     await s3Client.send(
@@ -232,7 +216,6 @@ export async function uploadDocument(caseId: string, formData: FormData) {
       })
     );
 
-    // Cache in Redis
     await redis.setex(`viewer:${controlNumber}`, 3600, encryptedViewer.toString("base64"));
 
     const doc = await prisma.document.create({
@@ -254,7 +237,7 @@ export async function uploadDocument(caseId: string, formData: FormData) {
       userId: user.id,
       documentId: doc.id,
       caseId,
-      ipAddress: (await headers()).get("x-forwarded-for") || undefined,
+      ipAddress: (await headers()).get("x-forwarded-for") ?? undefined,
     });
 
     return { success: true, documentId: doc.id };
@@ -264,10 +247,10 @@ export async function uploadDocument(caseId: string, formData: FormData) {
 }
 ```
 
-**Step 3: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/upload/_actions.ts package.json
+git add app/\(app\)/cases/\[caseId\]/upload/_actions.ts
 git commit -m "feat: add document upload server action with encryption and watermarking"
 ```
 
@@ -276,17 +259,15 @@ git commit -m "feat: add document upload server action with encryption and water
 ## Task 5.4: Upload Form Page
 
 **Files:**
-- Create: `app/cases/[caseId]/upload/page.tsx`
-
-**Step 1: Write page**
+- Create: `app/(app)/cases/[caseId]/upload/page.tsx`
 
 ```tsx
-// app/cases/[caseId]/upload/page.tsx
+// app/(app)/cases/[caseId]/upload/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { uploadDocument } from "./_actions";
+import { uploadDocument } from "@/app/(app)/cases/[caseId]/upload/_actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -325,11 +306,7 @@ export default function UploadPage() {
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </div>
-        <Button
-          type="submit"
-          disabled={!file || uploading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={!file || uploading} className="w-full">
           {uploading ? "Uploading..." : "Upload"}
         </Button>
       </form>
@@ -338,9 +315,9 @@ export default function UploadPage() {
 }
 ```
 
-**Step 2: Commit**
+**Commit**
 
 ```bash
-git add app/cases/[caseId]/upload/page.tsx
+git add app/\(app\)/cases/\[caseId\]/upload/page.tsx
 git commit -m "feat: add document upload page"
 ```
