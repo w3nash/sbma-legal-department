@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { CasesEmptyState } from "@/components/cases/CasesEmptyState";
-import { columns } from "@/components/cases/columns";
+import { columns } from "./columns";
 import { useCasesQuery } from "@/hooks/use-cases";
 import {
   RiAddLine,
@@ -49,7 +49,7 @@ function CasesListSkeleton() {
   );
 }
 
-export function CasesView({ isAdmin }: { isAdmin: boolean }) {
+export function CasesContent({ isAdmin }: { isAdmin: boolean }) {
   const router = useRouter();
   const { data: cases = [], isLoading, error } = useCasesQuery();
   const [view, setView] = useState<ViewMode>("grid");

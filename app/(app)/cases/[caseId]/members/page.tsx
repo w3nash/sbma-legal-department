@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-guards";
 import { notFound } from "next/navigation";
 import { canManageCase } from "@/lib/permissions";
 import { UserRole } from "@/lib/constants";
-import { CaseMemberManager } from "@/components/cases/CaseMemberManager";
+import { CaseMembersContent } from "./content";
 import { MembersReadOnlyTable } from "@/components/cases/MembersReadOnlyTable";
 import { RiGroup3Line } from "@remixicon/react";
 
@@ -40,7 +40,7 @@ export default async function CaseMembersPage({
 
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <CaseMemberManager caseId={caseId} />
+        <CaseMembersContent caseId={caseId} />
       </HydrationBoundary>
     );
   }

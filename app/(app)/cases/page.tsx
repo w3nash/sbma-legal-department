@@ -4,7 +4,7 @@ import { casesQueryKeys } from "@/lib/query-keys";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guards";
 import { UserRole } from "@/lib/constants";
-import { CasesView } from "@/components/cases/CasesView";
+import { CasesContent } from "./content";
 
 export default async function CasesPage() {
   const session = await requireAuth();
@@ -34,7 +34,7 @@ export default async function CasesPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CasesView isAdmin={isAdmin} />
+      <CasesContent isAdmin={isAdmin} />
     </HydrationBoundary>
   );
 }

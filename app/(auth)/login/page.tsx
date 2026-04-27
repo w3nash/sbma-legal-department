@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
+import { RiEyeLine, RiEyeOffLine, RiShieldKeyholeFill } from "@remixicon/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
@@ -235,7 +235,8 @@ export default function LoginPage() {
 
               <Separator className="my-4" />
 
-              <p className="text-center text-xs tracking-widest text-muted-foreground uppercase">
+              <p className="flex items-center justify-center gap-2 text-center text-xs tracking-widest text-muted-foreground uppercase">
+                <RiShieldKeyholeFill className="size-4" />
                 Authorized personnel only
               </p>
             </form>

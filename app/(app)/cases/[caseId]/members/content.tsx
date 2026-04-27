@@ -102,7 +102,7 @@ function RemoveMemberAction({
   );
 }
 
-export function CaseMemberManager({ caseId }: { caseId: string }) {
+export function CaseMembersContent({ caseId }: { caseId: string }) {
   const { data: members = [] } = useCaseMembersQuery(caseId);
   const updateRoleMutation = useUpdateMemberRoleMutation(caseId);
 
