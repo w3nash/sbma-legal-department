@@ -1,8 +1,20 @@
-export default function AdminUsersPage() {
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "@/lib/get-query-client";
+import { adminQueryKeys } from "@/lib/query-keys";
+import { prisma } from "@/lib/prisma";
+import { UsersContent } from "./content";
+
+export default async function UsersPage() {
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: adminQueryKeys.users,
+    queryFn: () => prisma.user.findMany({ orderBy: { createdAt: "desc" } }),
+  });
+
   return (
-    <div>
-      <h2 className="text-xl font-semibold">Users</h2>
-      <p className="text-muted-foreground">Manage system users.</p>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <UsersContent />
+    </HydrationBoundary>
   );
 }

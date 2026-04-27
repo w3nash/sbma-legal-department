@@ -15,6 +15,9 @@ model User {
   image         String?
   role          UserRole  @default(member)
   isActive      Boolean   @default(true)
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]

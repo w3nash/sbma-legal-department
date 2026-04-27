@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [apiError, setApiError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -142,7 +144,8 @@ export default function LoginPage() {
               <form.Field
                 name="email"
                 validators={{
-                  onBlur: loginSchema.shape.email,
+                  onChange: loginSchema.shape.email,
+                  onMount: loginSchema.shape.email,
                 }}
               >
                 {(field) => (
@@ -157,7 +160,7 @@ export default function LoginPage() {
                       onChange={(e) => field.handleChange(e.target.value)}
                       disabled={form.state.isSubmitting}
                     />
-                    {field.state.meta.isTouched &&
+                    {field.state.meta.isDirty &&
                       field.state.meta.errors.length > 0 && (
                         <p className="text-sm text-destructive">
                           {field.state.meta.errors[0]?.message}
@@ -170,22 +173,39 @@ export default function LoginPage() {
               <form.Field
                 name="password"
                 validators={{
-                  onBlur: loginSchema.shape.password,
+                  onChange: loginSchema.shape.password,
+                  onMount: loginSchema.shape.password,
                 }}
               >
                 {(field) => (
                   <div className="space-y-2">
                     <Label htmlFor={field.name}>Password</Label>
-                    <Input
-                      id={field.name}
-                      type="password"
-                      placeholder="Enter your password"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      disabled={form.state.isSubmitting}
-                    />
-                    {field.state.meta.isTouched &&
+                    <div className="relative">
+                      <Input
+                        id={field.name}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        disabled={form.state.isSubmitting}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <RiEyeOffLine className="size-4" />
+                        ) : (
+                          <RiEyeLine className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                    {field.state.meta.isDirty &&
                       field.state.meta.errors.length > 0 && (
                         <p className="text-sm text-destructive">
                           {field.state.meta.errors[0]?.message}

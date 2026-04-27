@@ -5,10 +5,12 @@ export default async function CasesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Cases</h1>
-      <p className="text-muted-foreground">
-        Welcome back, {session.user.name}. Manage your cases here.
-      </p>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Cases</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Welcome back, {session.user.name}. Browse and manage all legal cases assigned to you.
+        </p>
+      </div>
     </div>
   );
 }

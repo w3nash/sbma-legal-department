@@ -8,6 +8,13 @@ export const UserRole = {
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
+export function formatRole(role: string): string {
+  return role
+    .split(/[_\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 /**
  * Membership roles within a case.
  */
@@ -27,6 +34,7 @@ export const Route = {
   Login: "/login",
   Cases: "/cases",
   AdminUsers: "/admin/users",
+  AdminUsersCreate: "/admin/users/create",
   AdminAuditLogs: "/admin/audit-logs",
   Profile: "/profile",
   ForgotPassword: "/forgot-password",

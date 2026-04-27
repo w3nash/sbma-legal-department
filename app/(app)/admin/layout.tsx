@@ -7,10 +7,5 @@ export default async function AdminLayout({
 }) {
   await requireAdmin();
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Administration</h1>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
