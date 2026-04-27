@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { revalidatePath } from "next/cache";
 import { createCaseSchema, updateCaseSchema } from "@/lib/schemas";
-import { Route, MembershipRole } from "@/lib/constants";
+import { Route, MembershipRole, UserRole } from "@/lib/constants";
 
 export async function createCaseAction(formData: FormData) {
   const session = await requireAdmin();
@@ -32,7 +32,7 @@ export async function getAvailableUsers(caseId: string) {
     .findMany({ where: { caseId }, select: { userId: true } })
     .then((m) => m.map((x) => x.userId));
   return prisma.user.findMany({
-    where: { isActive: true, id: { notIn: memberIds } },
+    where: { isActive: true, role: UserRole.Member, id: { notIn: memberIds } },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
   });
