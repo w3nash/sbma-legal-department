@@ -8,7 +8,9 @@ export async function GET() {
   const isAdmin = session.user.role === UserRole.Admin;
 
   const raw = await prisma.case.findMany({
-    where: isAdmin ? undefined : { members: { some: { userId: session.user.id } } },
+    where: isAdmin
+      ? undefined
+      : { members: { some: { userId: session.user.id } } },
     include: { _count: { select: { documents: true } } },
     orderBy: { createdAt: "desc" },
   });

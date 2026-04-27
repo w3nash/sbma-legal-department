@@ -89,7 +89,9 @@ export function useAddCaseMembersMutation(caseId: string) {
     mutationFn: ({ userIds, role }: { userIds: string[]; role: string }) =>
       addCaseMembersAction(caseId, userIds, role),
     onMutate: async ({ userIds, role }) => {
-      await queryClient.cancelQueries({ queryKey: casesQueryKeys.members(caseId) });
+      await queryClient.cancelQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
       const previousMembers = queryClient.getQueryData<CaseMemberRow[]>(
         casesQueryKeys.members(caseId)
       );
@@ -113,12 +115,19 @@ export function useAddCaseMembersMutation(caseId: string) {
     },
     onError: (err, _, context) => {
       if (context?.previousMembers !== undefined)
-        queryClient.setQueryData(casesQueryKeys.members(caseId), context.previousMembers);
+        queryClient.setQueryData(
+          casesQueryKeys.members(caseId),
+          context.previousMembers
+        );
       toast.error(err instanceof Error ? err.message : "Failed to add members");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: casesQueryKeys.members(caseId) });
-      queryClient.invalidateQueries({ queryKey: casesQueryKeys.availableUsers(caseId) });
+      queryClient.invalidateQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: casesQueryKeys.availableUsers(caseId),
+      });
     },
   });
 }
@@ -128,7 +137,9 @@ export function useRemoveCaseMemberMutation(caseId: string) {
   return useMutation({
     mutationFn: (userId: string) => removeCaseMember(caseId, userId),
     onMutate: async (userId) => {
-      await queryClient.cancelQueries({ queryKey: casesQueryKeys.members(caseId) });
+      await queryClient.cancelQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
       const previous = queryClient.getQueryData<CaseMemberRow[]>(
         casesQueryKeys.members(caseId)
       );
@@ -141,12 +152,21 @@ export function useRemoveCaseMemberMutation(caseId: string) {
     onSuccess: () => toast.success("Member removed"),
     onError: (err, _, context) => {
       if (context?.previous !== undefined)
-        queryClient.setQueryData(casesQueryKeys.members(caseId), context.previous);
-      toast.error(err instanceof Error ? err.message : "Failed to remove member");
+        queryClient.setQueryData(
+          casesQueryKeys.members(caseId),
+          context.previous
+        );
+      toast.error(
+        err instanceof Error ? err.message : "Failed to remove member"
+      );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: casesQueryKeys.members(caseId) });
-      queryClient.invalidateQueries({ queryKey: casesQueryKeys.availableUsers(caseId) });
+      queryClient.invalidateQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: casesQueryKeys.availableUsers(caseId),
+      });
     },
   });
 }
@@ -157,7 +177,9 @@ export function useUpdateMemberRoleMutation(caseId: string) {
     mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       updateMemberRole(caseId, userId, role),
     onMutate: async ({ userId, role }) => {
-      await queryClient.cancelQueries({ queryKey: casesQueryKeys.members(caseId) });
+      await queryClient.cancelQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
       const previous = queryClient.getQueryData<CaseMemberRow[]>(
         casesQueryKeys.members(caseId)
       );
@@ -171,11 +193,16 @@ export function useUpdateMemberRoleMutation(caseId: string) {
     onSuccess: () => toast.success("Role updated"),
     onError: (err, _, context) => {
       if (context?.previous !== undefined)
-        queryClient.setQueryData(casesQueryKeys.members(caseId), context.previous);
+        queryClient.setQueryData(
+          casesQueryKeys.members(caseId),
+          context.previous
+        );
       toast.error(err instanceof Error ? err.message : "Failed to update role");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: casesQueryKeys.members(caseId) });
+      queryClient.invalidateQueries({
+        queryKey: casesQueryKeys.members(caseId),
+      });
     },
   });
 }
@@ -186,14 +213,17 @@ export function useUpdateCaseMutation(caseId: string) {
     mutationFn: (fd: FormData) => updateCaseAction(caseId, fd),
     onMutate: async (fd) => {
       await queryClient.cancelQueries({ queryKey: casesQueryKeys.list() });
-      const previous = queryClient.getQueryData<CaseRow[]>(casesQueryKeys.list());
+      const previous = queryClient.getQueryData<CaseRow[]>(
+        casesQueryKeys.list()
+      );
       queryClient.setQueryData<CaseRow[]>(casesQueryKeys.list(), (old = []) =>
         old.map((c) =>
           c.id === caseId
             ? {
                 ...c,
                 title: (fd.get("title") as string) ?? c.title,
-                caseNumber: (fd.get("caseNumber") as string | null) ?? c.caseNumber,
+                caseNumber:
+                  (fd.get("caseNumber") as string | null) ?? c.caseNumber,
                 status: (fd.get("status") as string) ?? c.status,
               }
             : c

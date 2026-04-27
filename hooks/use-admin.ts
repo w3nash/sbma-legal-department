@@ -64,7 +64,9 @@ export function useToggleUserActiveMutation() {
       toggleUserActive(userId, isActive),
     onMutate: async ({ userId, isActive }) => {
       await queryClient.cancelQueries({ queryKey: adminQueryKeys.users });
-      const previous = queryClient.getQueryData<UserRow[]>(adminQueryKeys.users);
+      const previous = queryClient.getQueryData<UserRow[]>(
+        adminQueryKeys.users
+      );
       queryClient.setQueryData<UserRow[]>(adminQueryKeys.users, (old = []) =>
         old.map((u) => (u.id === userId ? { ...u, isActive } : u))
       );

@@ -42,9 +42,7 @@ export function LegalFolderIcon({
           fillOpacity="0.12"
         />
       </svg>
-      <RiScales3Line
-        className="pointer-events-none absolute top-[62%] left-1/2 h-auto w-[50%] -translate-x-1/2 -translate-y-1/2 text-white opacity-30"
-      />
+      <RiScales3Line className="pointer-events-none absolute top-[62%] left-1/2 h-auto w-[50%] -translate-x-1/2 -translate-y-1/2 text-white opacity-30" />
     </div>
   );
 }

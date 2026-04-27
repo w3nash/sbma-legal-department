@@ -6,5 +6,6 @@ export const adminQueryKeys = {
 export const casesQueryKeys = {
   list: () => ["cases", "list"] as const,
   members: (caseId: string) => ["cases", caseId, "members"] as const,
-  availableUsers: (caseId: string) => ["cases", caseId, "available-users"] as const,
+  availableUsers: (caseId: string) =>
+    ["cases", caseId, "available-users"] as const,
 };
