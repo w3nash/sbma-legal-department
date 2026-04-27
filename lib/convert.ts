@@ -5,6 +5,7 @@ import path from "path";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
+const SOFFICE_TIMEOUT_MS = 60_000;
 
 const OFFICE_MIMES = [
   "application/msword",
@@ -39,7 +40,9 @@ export async function convertToPDF(
       "--outdir",
       tmpDir,
       inputPath,
-    ]);
+    ], {
+      timeout: SOFFICE_TIMEOUT_MS,
+    });
 
     const basename = path.basename(inputPath, path.extname(inputPath));
     return fs.readFile(path.join(tmpDir, `${basename}.pdf`));

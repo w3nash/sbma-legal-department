@@ -57,6 +57,7 @@ describe("convert", () => {
       (
         _command: string,
         args: string[],
+        _options: { timeout: number },
         callback: (error: Error | null, stdout: string, stderr: string) => void,
       ) => {
         outputDir = args[args.indexOf("--outdir") + 1];
@@ -82,6 +83,7 @@ describe("convert", () => {
         outputDir,
         inputPath,
       ],
+      { timeout: 60_000 },
       expect.any(Function),
     );
     await expect(fs.stat(outputDir)).rejects.toMatchObject({ code: "ENOENT" });
