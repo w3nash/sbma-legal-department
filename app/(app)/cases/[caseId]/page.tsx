@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guards";
 import { redirect, notFound } from "next/navigation";
 import { canViewCase, canUploadToCase, canManageCase } from "@/lib/permissions";
-import { UserRole } from "@/lib/constants";
+import { UserRole, type MembershipRole } from "@/lib/constants";
 import { DocumentList } from "@/components/cases/DocumentList";
 import { CaseMemberManager } from "@/components/cases/CaseMemberManager";
 import { Button } from "@/components/ui/button";
@@ -30,15 +30,15 @@ export default async function CaseDetailPage({
   if (!c) notFound();
 
   const membership = c.members.find((m) => m.userId === user.id) ?? null;
-  if (!canViewCase({ role: user.role }, membership ? { role: membership.role } : null)) {
+  const userRole = user.role as UserRole;
+  const memberRole = membership ? { role: membership.role as MembershipRole } : null;
+
+  if (!canViewCase({ role: userRole }, memberRole)) {
     redirect("/cases");
   }
 
-  const isAdmin = canManageCase({ role: user.role });
-  const canUpload = canUploadToCase(
-    { role: user.role },
-    membership ? { role: membership.role } : null
-  );
+  const isAdmin = canManageCase({ role: userRole });
+  const canUpload = canUploadToCase({ role: userRole }, memberRole);
 
   const allUsers = isAdmin
     ? await prisma.user.findMany({
@@ -59,8 +59,8 @@ export default async function CaseDetailPage({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Documents</h2>
         {(isAdmin || canUpload) && (
-          <Button asChild>
-            <Link href={`/cases/${caseId}/upload`}>Upload Document</Link>
+          <Button nativeButton={false} render={<Link href={`/cases/${caseId}/upload`} />}>
+            Upload Document
           </Button>
         )}
       </div>

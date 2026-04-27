@@ -14,7 +14,8 @@ export default function NewCasePage() {
   const router = useRouter();
   const form = useForm({
     defaultValues: { title: "", caseNumber: "", description: "" },
-    validators: { onBlur: createCaseSchema },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validators: { onBlur: createCaseSchema as any },
     onSubmit: async ({ value }) => {
       const fd = new FormData();
       fd.append("title", value.title);
@@ -49,7 +50,7 @@ export default function NewCasePage() {
               {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-red-500">
                   {field.state.meta.errors
-                    .map((e) => (typeof e === "string" ? e : e.message))
+                    .map((e) => (typeof e === "string" ? e : (e?.message ?? "Invalid value")))
                     .join(", ")}
                 </p>
               )}

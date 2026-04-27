@@ -54,7 +54,7 @@ export function CaseMemberManager({
     <div className="space-y-4">
       <h3 className="font-semibold">Case Members</h3>
       <div className="flex gap-2">
-        <Select value={userId} onValueChange={setUserId}>
+        <Select value={userId} onValueChange={(v) => setUserId(v ?? "")}>
           <SelectTrigger className="w-[300px]">
             <SelectValue placeholder="Select user..." />
           </SelectTrigger>
@@ -70,7 +70,7 @@ export function CaseMemberManager({
         <Select
           value={role}
           onValueChange={(v) =>
-            setRole(v as typeof MembershipRole[keyof typeof MembershipRole])
+            setRole((v ?? MembershipRole.Viewer) as typeof MembershipRole[keyof typeof MembershipRole])
           }
         >
           <SelectTrigger>

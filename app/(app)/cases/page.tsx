@@ -20,8 +20,8 @@ export default async function CasesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Cases</h1>
         {isAdmin && (
-          <Button asChild>
-            <Link href="/cases/new">New Case</Link>
+          <Button nativeButton={false} render={<Link href="/cases/new" />}>
+            New Case
           </Button>
         )}
       </div>
