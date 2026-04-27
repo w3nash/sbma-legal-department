@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 import { promisify } from "util";
+import { env } from "@/env";
 
 const execFileAsync = promisify(execFile);
 const SOFFICE_TIMEOUT_MS = 60_000;
@@ -23,9 +24,13 @@ export function needsConversion(mimeType: string): boolean {
   return OFFICE_MIMES.includes(mimeType);
 }
 
+function getSofficePath(): string {
+  return env.SOFFICE_PATH ?? "soffice";
+}
+
 export async function convertToPDF(
   inputPath: string,
-  mimeType: string,
+  mimeType: string
 ): Promise<Buffer> {
   if (!needsConversion(mimeType)) {
     return fs.readFile(inputPath);
@@ -33,16 +38,13 @@ export async function convertToPDF(
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "sbma-"));
   try {
-    await execFileAsync("soffice", [
-      "--headless",
-      "--convert-to",
-      "pdf",
-      "--outdir",
-      tmpDir,
-      inputPath,
-    ], {
-      timeout: SOFFICE_TIMEOUT_MS,
-    });
+    await execFileAsync(
+      getSofficePath(),
+      ["--headless", "--convert-to", "pdf", "--outdir", tmpDir, inputPath],
+      {
+        timeout: SOFFICE_TIMEOUT_MS,
+      }
+    );
 
     const basename = path.basename(inputPath, path.extname(inputPath));
     return fs.readFile(path.join(tmpDir, `${basename}.pdf`));

@@ -13,6 +13,8 @@ vi.mock("child_process", () => ({
 describe("convert", () => {
   afterEach(() => {
     execFileMock.mockReset();
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   it("detects office MIME types that need PDF conversion", async () => {
@@ -20,13 +22,13 @@ describe("convert", () => {
 
     expect(
       needsConversion(
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      )
     ).toBe(true);
     expect(needsConversion("application/vnd.ms-excel")).toBe(true);
     expect(needsConversion("application/vnd.ms-powerpoint")).toBe(true);
     expect(needsConversion("application/vnd.oasis.opendocument.text")).toBe(
-      true,
+      true
     );
     expect(needsConversion("application/rtf")).toBe(true);
     expect(needsConversion("text/rtf")).toBe(false);
@@ -58,35 +60,63 @@ describe("convert", () => {
         _command: string,
         args: string[],
         _options: { timeout: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | null, stdout: string, stderr: string) => void
       ) => {
         outputDir = args[args.indexOf("--outdir") + 1];
         writeFileSync(path.join(outputDir, "pleading.pdf"), "pdf output");
         callback(null, "", "");
-      },
+      }
     );
 
     const { convertToPDF } = await import("../convert");
     const result = await convertToPDF(
       inputPath,
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );
 
     expect(result.toString()).toBe("pdf output");
     expect(execFileMock).toHaveBeenCalledWith(
       "soffice",
-      [
-        "--headless",
-        "--convert-to",
-        "pdf",
-        "--outdir",
-        outputDir,
-        inputPath,
-      ],
+      ["--headless", "--convert-to", "pdf", "--outdir", outputDir, inputPath],
       { timeout: 60_000 },
-      expect.any(Function),
+      expect.any(Function)
     );
     await expect(fs.stat(outputDir)).rejects.toMatchObject({ code: "ENOENT" });
+
+    await fs.rm(inputDir, { recursive: true, force: true });
+  });
+
+  it("uses SOFFICE_PATH when configured", async () => {
+    vi.stubEnv("SOFFICE_PATH", "/custom/bin/soffice");
+    const inputDir = await fs.mkdtemp(path.join(os.tmpdir(), "sbma-test-"));
+    const inputPath = path.join(inputDir, "pleading.docx");
+    await fs.writeFile(inputPath, "word contents");
+
+    execFileMock.mockImplementation(
+      (
+        _command: string,
+        args: string[],
+        _options: { timeout: number },
+        callback: (error: Error | null, stdout: string, stderr: string) => void
+      ) => {
+        const outputDir = args[args.indexOf("--outdir") + 1];
+        writeFileSync(path.join(outputDir, "pleading.pdf"), "pdf output");
+        callback(null, "", "");
+      }
+    );
+
+    const { convertToPDF } = await import("../convert");
+    await convertToPDF(
+      inputPath,
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+
+    expect(execFileMock).toHaveBeenCalledWith(
+      "/custom/bin/soffice",
+      expect.any(Array),
+      { timeout: 60_000 },
+      expect.any(Function)
+    );
 
     await fs.rm(inputDir, { recursive: true, force: true });
   });

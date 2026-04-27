@@ -15,9 +15,14 @@ export const env = createEnv({
       message: "S3_FORCE_PATH_STYLE must be 'true' or 'false'",
     }),
     REDIS_URL: z.string().min(1, "REDIS_URL is required"),
+    SOFFICE_PATH: z.string().min(1).optional(),
     MASTER_ENCRYPTION_KEY: z
       .string()
-      .min(1, "MASTER_ENCRYPTION_KEY is required"),
+      .min(1, "MASTER_ENCRYPTION_KEY is required")
+      .refine(
+        (value) => Buffer.from(value, "base64").length === 32,
+        "MASTER_ENCRYPTION_KEY must be a base64-encoded 32-byte key"
+      ),
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
   },
   client: {},
