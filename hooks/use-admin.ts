@@ -62,14 +62,26 @@ export function useToggleUserActiveMutation() {
   return useMutation({
     mutationFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
       toggleUserActive(userId, isActive),
+    onMutate: async ({ userId, isActive }) => {
+      await queryClient.cancelQueries({ queryKey: adminQueryKeys.users });
+      const previous = queryClient.getQueryData<UserRow[]>(adminQueryKeys.users);
+      queryClient.setQueryData<UserRow[]>(adminQueryKeys.users, (old = []) =>
+        old.map((u) => (u.id === userId ? { ...u, isActive } : u))
+      );
+      return { previous };
+    },
     onSuccess: (_, { isActive }) => {
-      queryClient.invalidateQueries({ queryKey: adminQueryKeys.users });
       toast.success(isActive ? "User activated." : "User deactivated.");
     },
-    onError: (err) => {
+    onError: (err, _, context) => {
+      if (context?.previous !== undefined)
+        queryClient.setQueryData(adminQueryKeys.users, context.previous);
       toast.error(
         err instanceof Error ? err.message : "Failed to update user status."
       );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: adminQueryKeys.users });
     },
   });
 }
