@@ -16,6 +16,7 @@ import { canUploadToCase } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
+import { ensureStorageBucket } from "@/lib/s3-bucket";
 import { addWatermark } from "@/lib/watermark";
 
 const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
@@ -128,6 +129,7 @@ export async function uploadDocument(caseId: string, formData: FormData) {
 
     const originalKey = `documents/${caseId}/${controlNumber}/original.enc`;
     const encryptedOriginal = encryptFile(pdfBuffer, fileKey);
+    await ensureStorageBucket();
     uploadedKeys.push(originalKey);
     await s3Client.send(
       new PutObjectCommand({

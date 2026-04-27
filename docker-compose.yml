@@ -13,6 +13,7 @@ services:
       - S3_BUCKET=${S3_BUCKET:-sbma-legal}
       - S3_REGION=${S3_REGION:-ap-southeast-1}
       - S3_FORCE_PATH_STYLE=true
+      - S3_AUTO_CREATE_BUCKET=${S3_AUTO_CREATE_BUCKET:-true}
       - REDIS_URL=redis://cache:6379
       - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
       - NODE_ENV=production

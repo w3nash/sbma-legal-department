@@ -14,6 +14,7 @@ export const env = createEnv({
     S3_FORCE_PATH_STYLE: z.enum(["true", "false"], {
       message: "S3_FORCE_PATH_STYLE must be 'true' or 'false'",
     }),
+    S3_AUTO_CREATE_BUCKET: z.enum(["true", "false"]).default("false"),
     REDIS_URL: z.string().min(1, "REDIS_URL is required"),
     SOFFICE_PATH: z.string().min(1).optional(),
     MASTER_ENCRYPTION_KEY: z
