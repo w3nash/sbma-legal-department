@@ -20,7 +20,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="-ml-1" />
             <AppBreadcrumb />
           </header>
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex flex-1 flex-col overflow-hidden p-6">
+            {children}
+          </main>
         </SidebarInset>
       </SidebarProvider>
       <Toaster position="top-center" />

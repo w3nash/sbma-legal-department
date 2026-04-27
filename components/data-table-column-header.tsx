@@ -1,7 +1,11 @@
 "use client";
 
 import { Column } from "@tanstack/react-table";
-import { RiArrowUpLine, RiArrowDownLine, RiArrowUpDownLine } from "@remixicon/react";
+import {
+  RiArrowUpLine,
+  RiArrowDownLine,
+  RiArrowUpDownLine,
+} from "@remixicon/react";
 import { Button } from "@/components/ui/button";
 
 interface DataTableColumnHeaderProps<TData, TValue> {

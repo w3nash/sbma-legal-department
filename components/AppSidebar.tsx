@@ -17,15 +17,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -33,8 +31,9 @@ import {
   RiTeamLine,
   RiShieldCheckLine,
   RiLogoutBoxRLine,
-  RiArrowUpSLine,
+  RiArrowDownSLine,
 } from "@remixicon/react";
+import { initials } from "@/lib/utils";
 
 export function AppSidebar() {
   const user = useAuthUser();
@@ -140,47 +139,41 @@ export function AppSidebar() {
                 </div>
               </div>
             ) : (
-              <Collapsible className="group/collapsible">
-                <CollapsibleTrigger
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   render={
                     <SidebarMenuButton
                       size="lg"
-                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                    >
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src={user?.image ?? ""} alt={user?.name} />
-                        <AvatarFallback className="rounded-lg">
-                          {user?.name?.charAt(0).toUpperCase() ?? "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">
-                          {user?.name}
-                        </span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {user?.email}
-                        </span>
-                      </div>
-                      <RiArrowUpSLine className="ml-auto size-4 transition-transform group-data-[open]/collapsible:rotate-180" />
-                    </SidebarMenuButton>
+                      className="data-[popup-open]:bg-sidebar-accent data-[popup-open]:text-sidebar-accent-foreground"
+                    />
                   }
-                />
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        onClick={async () => {
-                          await signOut();
-                          window.location.href = Route.Login;
-                        }}
-                      >
-                        <RiLogoutBoxRLine className="size-4 fill-destructive" />
-                        <span>Logout</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </Collapsible>
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={user?.image ?? ""} alt={user?.name} />
+                    <AvatarFallback className="rounded-lg">
+                      {user?.name ? initials(user.name) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                    <span className="truncate font-semibold">{user?.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </span>
+                  </div>
+                  <RiArrowDownSLine className="ml-auto size-4 transition-transform group-data-[collapsible=icon]:hidden [[data-popup-open]_&]:rotate-180" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="end" className="w-full">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut();
+                      window.location.href = Route.Login;
+                    }}
+                  >
+                    <RiLogoutBoxRLine className="size-4 fill-destructive" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </SidebarMenuItem>
         </SidebarMenu>

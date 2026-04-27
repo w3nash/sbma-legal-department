@@ -24,7 +24,12 @@ interface CreateUserFormProps {
   hideSubmit?: boolean;
 }
 
-export function CreateUserForm({ onSuccess, redirectTo, formId, hideSubmit }: CreateUserFormProps) {
+export function CreateUserForm({
+  onSuccess,
+  redirectTo,
+  formId,
+  hideSubmit,
+}: CreateUserFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync: createUser } = useCreateUserMutation();
@@ -76,18 +81,15 @@ export function CreateUserForm({ onSuccess, redirectTo, formId, hideSubmit }: Cr
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            {field.state.meta.isDirty &&
-              field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">
-                  {field.state.meta.errors
-                    .map((e) =>
-                      typeof e === "string"
-                        ? e
-                        : (e?.message ?? "Invalid value")
-                    )
-                    .join(", ")}
-                </p>
-              )}
+            {field.state.meta.isDirty && field.state.meta.errors.length > 0 && (
+              <p className="text-sm text-destructive">
+                {field.state.meta.errors
+                  .map((e) =>
+                    typeof e === "string" ? e : (e?.message ?? "Invalid value")
+                  )
+                  .join(", ")}
+              </p>
+            )}
           </div>
         )}
       </form.Field>
@@ -104,18 +106,15 @@ export function CreateUserForm({ onSuccess, redirectTo, formId, hideSubmit }: Cr
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            {field.state.meta.isDirty &&
-              field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">
-                  {field.state.meta.errors
-                    .map((e) =>
-                      typeof e === "string"
-                        ? e
-                        : (e?.message ?? "Invalid value")
-                    )
-                    .join(", ")}
-                </p>
-              )}
+            {field.state.meta.isDirty && field.state.meta.errors.length > 0 && (
+              <p className="text-sm text-destructive">
+                {field.state.meta.errors
+                  .map((e) =>
+                    typeof e === "string" ? e : (e?.message ?? "Invalid value")
+                  )
+                  .join(", ")}
+              </p>
+            )}
           </div>
         )}
       </form.Field>
@@ -170,7 +169,7 @@ export function CreateUserForm({ onSuccess, redirectTo, formId, hideSubmit }: Cr
                 onClick={() => setShowPassword((v) => !v)}
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <RiEyeOffLine className="size-4" />
@@ -179,18 +178,15 @@ export function CreateUserForm({ onSuccess, redirectTo, formId, hideSubmit }: Cr
                 )}
               </button>
             </div>
-            {field.state.meta.isDirty &&
-              field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">
-                  {field.state.meta.errors
-                    .map((e) =>
-                      typeof e === "string"
-                        ? e
-                        : (e?.message ?? "Invalid value")
-                    )
-                    .join(", ")}
-                </p>
-              )}
+            {field.state.meta.isDirty && field.state.meta.errors.length > 0 && (
+              <p className="text-sm text-destructive">
+                {field.state.meta.errors
+                  .map((e) =>
+                    typeof e === "string" ? e : (e?.message ?? "Invalid value")
+                  )
+                  .join(", ")}
+              </p>
+            )}
           </div>
         )}
       </form.Field>

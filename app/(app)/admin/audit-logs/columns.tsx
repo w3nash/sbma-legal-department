@@ -52,9 +52,7 @@ export const columns: ColumnDef<AuditLogRow>[] = [
     cell: ({ row }) => {
       const doc = row.original.document;
       return (
-        <span className="font-mono text-xs">
-          {doc?.controlNumber ?? "-"}
-        </span>
+        <span className="font-mono text-xs">{doc?.controlNumber ?? "-"}</span>
       );
     },
   },

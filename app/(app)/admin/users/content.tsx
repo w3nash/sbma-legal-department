@@ -45,11 +45,12 @@ export function UsersContent() {
   const { data: users = [], isLoading, error } = useUsersQuery();
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="flex h-full flex-col gap-6">
+      <div className="shrink-0">
         <h1 className="text-2xl font-semibold tracking-tight">Manage Users</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Create accounts, assign roles, and activate or deactivate user access across the system.
+          Create accounts, assign roles, and activate or deactivate user access
+          across the system.
         </p>
       </div>
       {error ? (
@@ -57,7 +58,9 @@ export function UsersContent() {
       ) : isLoading ? (
         <UsersTableSkeleton />
       ) : (
-        <UsersDataTable data={users} />
+        <div className="min-h-0 flex-1">
+          <UsersDataTable data={users} />
+        </div>
       )}
     </div>
   );

@@ -31,7 +31,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { RiArrowLeftSLine, RiArrowRightSLine, RiSearchLine, RiSettings3Line } from "@remixicon/react";
+import {
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+  RiSearchLine,
+  RiSettings3Line,
+} from "@remixicon/react";
 
 interface AuditLogsDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -48,8 +53,11 @@ export function AuditLogsDataTable<TData, TValue>({
 }: AuditLogsDataTableProps<TData, TValue>) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -79,13 +87,15 @@ export function AuditLogsDataTable<TData, TValue>({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="relative max-w-sm">
-          <RiSearchLine className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <div className="relative w-full max-w-sm">
+          <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by action..."
-            value={(table.getColumn("action")?.getFilterValue() as string) ?? ""}
+            value={
+              (table.getColumn("action")?.getFilterValue() as string) ?? ""
+            }
             onChange={(event) =>
               table.getColumn("action")?.setFilterValue(event.target.value)
             }
@@ -95,13 +105,10 @@ export function AuditLogsDataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-4xl border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
-              >
-                <RiSettings3Line className="mr-2 h-4 w-4" />
+              <Button type="button" variant="outline">
+                <RiSettings3Line className="size-4" />
                 Columns
-              </button>
+              </Button>
             }
           />
           <DropdownMenuContent align="end" className="w-[150px]">
@@ -111,7 +118,8 @@ export function AuditLogsDataTable<TData, TValue>({
                 .getAllColumns()
                 .filter(
                   (column) =>
-                    typeof column.accessorFn !== "undefined" && column.getCanHide()
+                    typeof column.accessorFn !== "undefined" &&
+                    column.getCanHide()
                 )
                 .map((column) => {
                   return (
@@ -131,7 +139,7 @@ export function AuditLogsDataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="min-h-0 flex-1 overflow-auto rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -181,7 +189,7 @@ export function AuditLogsDataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-2">
+      <div className="flex shrink-0 items-center justify-between px-2">
         <div className="text-sm text-muted-foreground">
           Page {pageNum} of {totalPages}
         </div>

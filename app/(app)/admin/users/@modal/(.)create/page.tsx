@@ -20,7 +20,12 @@ export default function CreateUserModal() {
   const close = () => router.back();
 
   return (
-    <Sheet open onOpenChange={(open) => { if (!open) close(); }}>
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+    >
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Create User</SheetTitle>
@@ -29,16 +34,10 @@ export default function CreateUserModal() {
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-6 pt-0">
-          <CreateUserForm
-            formId={FORM_ID}
-            hideSubmit
-            onSuccess={close}
-          />
+          <CreateUserForm formId={FORM_ID} hideSubmit onSuccess={close} />
         </div>
         <SheetFooter className="grid grid-cols-2">
-          <SheetClose render={<Button variant="outline" />}>
-            Cancel
-          </SheetClose>
+          <SheetClose render={<Button variant="outline" />}>Cancel</SheetClose>
           <Button type="submit" form={FORM_ID}>
             Create User
           </Button>

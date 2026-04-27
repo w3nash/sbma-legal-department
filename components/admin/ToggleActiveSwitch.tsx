@@ -45,7 +45,12 @@ export function ToggleActiveSwitch({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
-        render={<button type="button" className="flex w-36 cursor-pointer items-center gap-2" />}
+        render={
+          <button
+            type="button"
+            className="flex w-36 cursor-pointer items-center gap-2"
+          />
+        }
       >
         <Switch checked={true} disabled={isPending} />
         <span className="text-sm text-muted-foreground">

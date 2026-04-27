@@ -16,14 +16,27 @@ export const createUserSchema = z.object({
 });
 
 export const createCaseSchema = z.object({
-  title: z.string().min(1),
-  caseNumber: z.string().optional(),
-  description: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  caseNumber: z.string().min(1, "Case number is required"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or fewer")
+    .optional(),
 });
 
 export const addMemberSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().min(1),
   role: z.enum([MembershipRole.Viewer, MembershipRole.Uploader]),
+});
+
+export const updateCaseSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  caseNumber: z.string().min(1, "Case number is required"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or fewer")
+    .optional(),
+  status: z.enum(["open", "closed", "archived"]),
 });
 
 export const uploadDocumentSchema = z.object({

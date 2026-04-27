@@ -53,11 +53,12 @@ export function AuditLogsContent() {
   const { data, isLoading, error } = useAuditLogsQuery(pageNum);
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="flex h-full flex-col gap-6">
+      <div className="shrink-0">
         <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review a complete record of all system activity, user actions, and document events.
+          Review a complete record of all system activity, user actions, and
+          document events.
         </p>
       </div>
       {error ? (
@@ -65,12 +66,14 @@ export function AuditLogsContent() {
       ) : isLoading ? (
         <AuditLogsTableSkeleton />
       ) : (
-        <AuditLogsDataTable
-          columns={columns}
-          data={data?.logs ?? []}
-          pageNum={data?.pageNum ?? pageNum}
-          totalPages={data?.totalPages ?? 1}
-        />
+        <div className="min-h-0 flex-1">
+          <AuditLogsDataTable
+            columns={columns}
+            data={data?.logs ?? []}
+            pageNum={data?.pageNum ?? pageNum}
+            totalPages={data?.totalPages ?? 1}
+          />
+        </div>
       )}
     </div>
   );

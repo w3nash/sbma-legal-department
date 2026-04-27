@@ -50,7 +50,9 @@ export function useCreateUserMutation() {
       toast.success("User created successfully.");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to create user.");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create user."
+      );
     },
   });
 }
@@ -65,7 +67,9 @@ export function useToggleUserActiveMutation() {
       toast.success(isActive ? "User activated." : "User deactivated.");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update user status.");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update user status."
+      );
     },
   });
 }

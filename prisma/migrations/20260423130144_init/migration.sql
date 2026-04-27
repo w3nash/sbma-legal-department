@@ -74,8 +74,8 @@ CREATE TABLE "verification" (
 CREATE TABLE "case" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "caseNumber" TEXT,
-    "description" TEXT,
+    "caseNumber" TEXT NOT NULL,
+    "description" VARCHAR(500),
     "status" "CaseStatus" NOT NULL DEFAULT 'open',
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
