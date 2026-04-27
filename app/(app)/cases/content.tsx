@@ -43,7 +43,7 @@ function CasesListSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {Array.from({ length: 12 }).map((_, i) => (
-        <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
+        <Skeleton key={i} className="aspect-3/4 rounded-lg" />
       ))}
     </div>
   );
