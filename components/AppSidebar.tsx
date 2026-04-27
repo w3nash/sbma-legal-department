@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   RiFolder3Line,
   RiTeamLine,
@@ -39,7 +40,7 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -128,53 +129,63 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  >
-                    <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={user?.image ?? ""} alt={user?.name} />
-                      <AvatarFallback className="rounded-lg">
-                        {user?.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
-                        {user?.name ?? "Guest"}
-                      </span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {user?.email ?? ""}
-                      </span>
-                    </div>
-                  </SidebarMenuButton>
-                }
-              />
-              <DropdownMenuContent
-                side="top"
-                className="w-[--radix-popper-anchor-width]"
-              >
-                <DropdownMenuItem
+            {user === undefined ? (
+              <div className="flex items-center gap-2 px-2 py-1.5">
+                <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+                <div className="grid flex-1 gap-1">
+                  <Skeleton className="h-3.5 w-24 rounded" />
+                  <Skeleton className="h-3 w-32 rounded" />
+                </div>
+              </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   render={
-                    <Link href={Route.Profile}>
-                      <RiUserLine className="mr-2 size-4" />
-                      Profile
-                    </Link>
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                    >
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage src={user?.image ?? ""} alt={user?.name} />
+                        <AvatarFallback className="rounded-lg">
+                          {user?.name?.charAt(0).toUpperCase() ?? "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">
+                          {user?.name}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {user?.email}
+                        </span>
+                      </div>
+                    </SidebarMenuButton>
                   }
                 />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await signOut();
-                    window.location.href = Route.Login;
-                  }}
+                <DropdownMenuContent
+                  side="top"
+                  className="w-[--radix-popper-anchor-width]"
                 >
-                  <RiLogoutBoxRLine className="mr-2 size-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    render={
+                      <Link href={Route.Profile}>
+                        <RiUserLine className="mr-2 size-4" />
+                        Profile
+                      </Link>
+                    }
+                  />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut();
+                      window.location.href = Route.Login;
+                    }}
+                  >
+                    <RiLogoutBoxRLine className="mr-2 size-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

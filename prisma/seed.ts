@@ -40,7 +40,7 @@ async function main() {
           name: userData.name,
         },
         asResponse: false,
-      })) as any;
+      })) as { user?: { id: string } } | null;
 
       if (result?.user) {
         // Update role if not default member
@@ -52,8 +52,9 @@ async function main() {
         }
         console.log(`✅ Created ${userData.role}: ${userData.email}`);
       }
-    } catch (error: any) {
-      console.error(`❌ Failed to create ${userData.email}:`, error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`❌ Failed to create ${userData.email}:`, message);
     }
   }
 
