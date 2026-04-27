@@ -91,7 +91,7 @@ export function DataTable<TData, TValue>({
     <div className="flex h-full flex-col gap-4">
       <div className="flex shrink-0 items-center justify-between gap-2">
         {searchColumn && (
-          <div className="relative max-w-sm">
+          <div className="relative w-full max-w-sm">
             <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
