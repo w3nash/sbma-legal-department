@@ -1,11 +1,11 @@
-# SBMA Legal — Document Archive Design
+# SBMA Legal Affairs — Document Archive Design
 
 **Date:** 2026-04-23
 **Status:** Approved
 
 ## 1. Overview
 
-SBMA Legal is an internal legal document archive for a legal team. It allows uploading, organizing, viewing, and downloading case-related documents with strong access control, audit logging, and forensic watermarking.
+SBMA Legal Affairs is an internal legal document archive for a legal team. It allows uploading, organizing, viewing, and downloading case-related documents with strong access control, audit logging, and forensic watermarking.
 
 The app is a **single Next.js 16 application** deployed via **Docker Compose** alongside PostgreSQL, MinIO (S3-compatible object storage), and Redis. Every document is encrypted at rest. Viewing uses a cached, control-number-only watermarked copy. Downloading/printing generates a unique hard-baked watermark per user per request.
 

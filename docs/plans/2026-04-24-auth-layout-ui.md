@@ -399,7 +399,7 @@ export function AppSidebar() {
                     <span className="text-sm font-bold">SL</span>
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">SBMA Legal</span>
+                    <span className="truncate font-semibold">SBMA Legal Affairs</span>
                     <span className="truncate text-xs text-muted-foreground">
                       Document Portal
                     </span>
@@ -576,7 +576,7 @@ export default function LoginPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Shield className="h-4 w-4" />
           </div>
-          SBMA Legal
+          SBMA Legal Affairs
         </div>
         <div className="space-y-6">
           <blockquote className="space-y-2">
@@ -588,7 +588,7 @@ export default function LoginPage() {
           </blockquote>
         </div>
         <div className="text-sm">
-          &copy; {new Date().getFullYear()} SBMA Legal. All rights reserved.
+          &copy; {new Date().getFullYear()} SBMA Legal Affairs. All rights reserved.
         </div>
       </div>
 
@@ -598,7 +598,7 @@ export default function LoginPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Shield className="h-4 w-4" />
           </div>
-          <span className="text-lg font-medium">SBMA Legal</span>
+          <span className="text-lg font-medium">SBMA Legal Affairs</span>
         </div>
 
         <div className="flex flex-1 items-center justify-center">
