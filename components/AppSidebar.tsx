@@ -17,21 +17,23 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   RiFolder3Line,
   RiTeamLine,
   RiShieldCheckLine,
   RiLogoutBoxRLine,
-  RiUserLine,
+  RiArrowUpSLine,
 } from "@remixicon/react";
 
 export function AppSidebar() {
@@ -138,8 +140,8 @@ export function AppSidebar() {
                 </div>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger
+              <Collapsible className="group/collapsible">
+                <CollapsibleTrigger
                   render={
                     <SidebarMenuButton
                       size="lg"
@@ -159,32 +161,26 @@ export function AppSidebar() {
                           {user?.email}
                         </span>
                       </div>
+                      <RiArrowUpSLine className="ml-auto size-4 transition-transform group-data-[open]/collapsible:rotate-180" />
                     </SidebarMenuButton>
                   }
                 />
-                <DropdownMenuContent
-                  side="top"
-                  className="w-[--radix-popper-anchor-width]"
-                >
-                  <DropdownMenuItem
-                    render={
-                      <Link href={Route.Profile}>
-                        <RiUserLine className="mr-2 size-4" />
-                        Profile
-                      </Link>
-                    }
-                  />
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      await signOut();
-                      window.location.href = Route.Login;
-                    }}
-                  >
-                    <RiLogoutBoxRLine className="mr-2 size-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        onClick={async () => {
+                          await signOut();
+                          window.location.href = Route.Login;
+                        }}
+                      >
+                        <RiLogoutBoxRLine className="size-4 fill-destructive" />
+                        <span>Logout</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
