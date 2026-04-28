@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const envMock = vi.hoisted(() => ({
   S3_AUTO_CREATE_BUCKET: "true",
+  S3_REGION: "ap-southeast-1",
 }));
 const s3SendMock = vi.hoisted(() => vi.fn());
 
@@ -30,6 +31,7 @@ function s3Error(name: string, statusCode: number) {
 describe("ensureStorageBucket", () => {
   afterEach(() => {
     envMock.S3_AUTO_CREATE_BUCKET = "true";
+    envMock.S3_REGION = "ap-southeast-1";
     vi.resetAllMocks();
     vi.resetModules();
   });
@@ -69,6 +71,27 @@ describe("ensureStorageBucket", () => {
     expect(s3SendMock).toHaveBeenCalledTimes(2);
     expect(s3SendMock.mock.calls[0]?.[0]).toBeInstanceOf(HeadBucketCommand);
     expect(s3SendMock.mock.calls[1]?.[0]).toBeInstanceOf(CreateBucketCommand);
+    expect(s3SendMock.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        input: {
+          Bucket: "test-bucket",
+          CreateBucketConfiguration: {
+            LocationConstraint: "ap-southeast-1",
+          },
+        },
+      })
+    );
+  });
+
+  it("omits region configuration for us-east-1 bucket creation", async () => {
+    envMock.S3_REGION = "us-east-1";
+    s3SendMock
+      .mockRejectedValueOnce(s3Error("NoSuchBucket", 404))
+      .mockResolvedValueOnce({});
+
+    const { ensureStorageBucket } = await import("@/lib/s3-bucket");
+    await ensureStorageBucket();
+
     expect(s3SendMock.mock.calls[1]?.[0]).toEqual(
       expect.objectContaining({
         input: { Bucket: "test-bucket" },

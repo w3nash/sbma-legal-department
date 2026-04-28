@@ -15,6 +15,7 @@ services:
       - S3_FORCE_PATH_STYLE=true
       - S3_AUTO_CREATE_BUCKET=${S3_AUTO_CREATE_BUCKET:-true}
       - REDIS_URL=redis://cache:6379
+      - SOFFICE_PATH=soffice
       - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
       - NODE_ENV=production
     depends_on:
@@ -39,6 +40,7 @@ services:
       - S3_FORCE_PATH_STYLE=true
       - S3_AUTO_CREATE_BUCKET=${S3_AUTO_CREATE_BUCKET:-true}
       - REDIS_URL=redis://cache:6379
+      - SOFFICE_PATH=soffice
       - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
       - NODE_ENV=production
     depends_on:

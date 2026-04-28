@@ -28,6 +28,15 @@ function getSofficePath(): string {
   return env.SOFFICE_PATH ?? "soffice";
 }
 
+async function runSoffice(
+  command: string,
+  args: string[]
+): Promise<void> {
+  await execFileAsync(command, args, {
+    timeout: SOFFICE_TIMEOUT_MS,
+  });
+}
+
 export async function convertToPDF(
   inputPath: string,
   mimeType: string
@@ -38,13 +47,30 @@ export async function convertToPDF(
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "sbma-"));
   try {
-    await execFileAsync(
-      getSofficePath(),
-      ["--headless", "--convert-to", "pdf", "--outdir", tmpDir, inputPath],
-      {
-        timeout: SOFFICE_TIMEOUT_MS,
+    const args = [
+      "--headless",
+      "--convert-to",
+      "pdf",
+      "--outdir",
+      tmpDir,
+      inputPath,
+    ];
+    const configuredPath = getSofficePath();
+
+    try {
+      await runSoffice(configuredPath, args);
+    } catch (error) {
+      const errorCode =
+        error instanceof Error
+          ? (error as NodeJS.ErrnoException).code
+          : undefined;
+
+      if (configuredPath !== "soffice" && errorCode === "ENOENT") {
+        await runSoffice("soffice", args);
+      } else {
+        throw error;
       }
-    );
+    }
 
     const basename = path.basename(inputPath, path.extname(inputPath));
     return fs.readFile(path.join(tmpDir, `${basename}.pdf`));

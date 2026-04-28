@@ -13,10 +13,12 @@ const encryptKeyMock = vi.hoisted(() => vi.fn());
 const encryptFileMock = vi.hoisted(() => vi.fn());
 const ensureStorageBucketMock = vi.hoisted(() => vi.fn());
 const enqueueDocumentProcessingJobMock = vi.hoisted(() => vi.fn());
+const removeDocumentProcessingJobMock = vi.hoisted(() => vi.fn());
 const s3SendMock = vi.hoisted(() => vi.fn());
 const logAuditMock = vi.hoisted(() => vi.fn());
 const headersMock = vi.hoisted(() => vi.fn());
 const uuidv4Mock = vi.hoisted(() => vi.fn());
+const redisSetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth-guards", () => ({
   requireAuth: requireAuthMock,
@@ -56,10 +58,17 @@ vi.mock("@/lib/s3-bucket", () => ({
 
 vi.mock("@/lib/document-processing", () => ({
   enqueueDocumentProcessingJob: enqueueDocumentProcessingJobMock,
+  removeDocumentProcessingJob: removeDocumentProcessingJobMock,
 }));
 
 vi.mock("@/lib/audit", () => ({
   logAudit: logAuditMock,
+}));
+
+vi.mock("@/lib/redis", () => ({
+  redis: {
+    set: redisSetMock,
+  },
 }));
 
 vi.mock("next/headers", () => ({
@@ -232,6 +241,39 @@ describe("uploadDocuments", () => {
     expect(documentCreateMock).not.toHaveBeenCalled();
   });
 
+  it("returns without re-uploading when the same submission is sent twice", async () => {
+    requireAuthMock.mockResolvedValue({
+      user: { id: "user-1", role: UserRole.Admin },
+    });
+    caseFindUniqueMock.mockResolvedValue({ id: "case-1" });
+    caseMemberFindUniqueMock.mockResolvedValue(null);
+    redisSetMock.mockResolvedValue(null);
+    const formData = new FormData();
+    formData.append(
+      "files",
+      new File(["pdf"], "pleading.pdf", { type: "application/pdf" })
+    );
+    formData.set("submissionId", "submission-1");
+
+    const { uploadDocuments } = await import("./_actions");
+    await expect(uploadDocuments("case-1", formData)).resolves.toEqual({
+      success: true,
+      documentIds: [],
+      createdCount: 0,
+      duplicate: true,
+    });
+
+    expect(redisSetMock).toHaveBeenCalledWith(
+      "upload-submission:user-1:case-1:submission-1",
+      "1",
+      "EX",
+      300,
+      "NX"
+    );
+    expect(s3SendMock).not.toHaveBeenCalled();
+    expect(documentCreateMock).not.toHaveBeenCalled();
+  });
+
   it("rejects oversized uploads before reading or external writes", async () => {
     requireAuthMock.mockResolvedValue({
       user: { id: "admin-1", role: UserRole.Admin },
@@ -312,5 +354,48 @@ describe("uploadDocuments", () => {
         },
       })
     );
+  });
+
+  it("removes already enqueued jobs when a later file fails", async () => {
+    requireAuthMock.mockResolvedValue({
+      user: { id: "admin-1", role: UserRole.Admin },
+    });
+    caseFindUniqueMock.mockResolvedValue({ id: "case-1" });
+    caseMemberFindUniqueMock.mockResolvedValue(null);
+    headersMock.mockResolvedValue(new Headers());
+    uuidv4Mock
+      .mockReturnValueOnce("control-1")
+      .mockReturnValueOnce("control-2");
+    generateFileKeyMock
+      .mockReturnValueOnce("file-key-1")
+      .mockReturnValueOnce("file-key-2");
+    encryptKeyMock
+      .mockReturnValueOnce("encrypted-key-1")
+      .mockReturnValueOnce("encrypted-key-2");
+    encryptFileMock
+      .mockReturnValueOnce(Buffer.from("encrypted-source-1"))
+      .mockReturnValueOnce(Buffer.from("encrypted-source-2"));
+    documentCreateMock
+      .mockResolvedValueOnce({ id: "doc-1" })
+      .mockResolvedValueOnce({ id: "doc-2" });
+    enqueueDocumentProcessingJobMock
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("redis down"));
+    const formData = new FormData();
+    formData.append(
+      "files",
+      new File(["first"], "first.pdf", { type: "application/pdf" })
+    );
+    formData.append(
+      "files",
+      new File(["second"], "second.pdf", { type: "application/pdf" })
+    );
+
+    const { uploadDocuments } = await import("./_actions");
+    await expect(uploadDocuments("case-1", formData)).rejects.toThrow(
+      "redis down"
+    );
+
+    expect(removeDocumentProcessingJobMock).toHaveBeenCalledWith("doc-1");
   });
 });

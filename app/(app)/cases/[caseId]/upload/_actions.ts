@@ -12,11 +12,17 @@ import {
   MAX_UPLOAD_SIZE_BYTES,
   getSupportedMimeType,
 } from "@/lib/document-upload";
-import { enqueueDocumentProcessingJob } from "@/lib/document-processing";
+import {
+  enqueueDocumentProcessingJob,
+  removeDocumentProcessingJob,
+} from "@/lib/document-processing";
 import { canUploadToCase } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
 import { ensureStorageBucket } from "@/lib/s3-bucket";
+
+const UPLOAD_SUBMISSION_TTL_SECONDS = 300;
 
 async function cleanupStoredUpload(uploadedKeys: string[]) {
   await Promise.allSettled(
@@ -35,6 +41,14 @@ function getUploadFiles(formData: FormData): File[] {
 
   const file = formData.get("file");
   return file instanceof File ? [file] : [];
+}
+
+function getUploadSubmissionId(formData: FormData): string | null {
+  const value = formData.get("submissionId");
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 export async function uploadDocuments(caseId: string, formData: FormData) {
@@ -77,11 +91,32 @@ export async function uploadDocuments(caseId: string, formData: FormData) {
     };
   });
 
+  const submissionId = getUploadSubmissionId(formData);
+  if (submissionId) {
+    const lockStatus = await redis.set(
+      `upload-submission:${user.id}:${caseId}:${submissionId}`,
+      "1",
+      "EX",
+      UPLOAD_SUBMISSION_TTL_SECONDS,
+      "NX"
+    );
+
+    if (lockStatus !== "OK") {
+      return {
+        success: true,
+        documentIds: [],
+        createdCount: 0,
+        duplicate: true as const,
+      };
+    }
+  }
+
   await ensureStorageBucket();
 
   const ipAddress = (await headers()).get("x-forwarded-for") ?? undefined;
   const uploadedKeys: string[] = [];
   const createdDocumentIds: string[] = [];
+  const enqueuedDocumentIds: string[] = [];
 
   try {
     for (const { file, sourceMimeType } of validatedFiles) {
@@ -121,6 +156,7 @@ export async function uploadDocuments(caseId: string, formData: FormData) {
 
       createdDocumentIds.push(doc.id);
       await enqueueDocumentProcessingJob(doc.id);
+      enqueuedDocumentIds.push(doc.id);
 
       await logAudit({
         action: AuditAction.UPLOAD,
@@ -138,6 +174,14 @@ export async function uploadDocuments(caseId: string, formData: FormData) {
       createdCount: createdDocumentIds.length,
     };
   } catch (error) {
+    if (enqueuedDocumentIds.length > 0) {
+      await Promise.allSettled(
+        enqueuedDocumentIds.map((documentId) =>
+          removeDocumentProcessingJob(documentId)
+        )
+      );
+    }
+
     if (createdDocumentIds.length > 0) {
       await prisma.document.deleteMany({
         where: { id: { in: createdDocumentIds } },

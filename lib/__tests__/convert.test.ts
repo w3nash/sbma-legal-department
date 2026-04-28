@@ -120,4 +120,55 @@ describe("convert", () => {
 
     await fs.rm(inputDir, { recursive: true, force: true });
   });
+
+  it("falls back to soffice when SOFFICE_PATH is missing", async () => {
+    vi.stubEnv("SOFFICE_PATH", "/Applications/LibreOffice.app/Contents/MacOS/soffice");
+    const inputDir = await fs.mkdtemp(path.join(os.tmpdir(), "sbma-test-"));
+    const inputPath = path.join(inputDir, "pleading.docx");
+    await fs.writeFile(inputPath, "word contents");
+
+    let outputDir = "";
+    execFileMock.mockImplementation(
+      (
+        command: string,
+        args: string[],
+        _options: { timeout: number },
+        callback: (error: Error | null, stdout: string, stderr: string) => void
+      ) => {
+        if (command === "/Applications/LibreOffice.app/Contents/MacOS/soffice") {
+          const error = Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" });
+          callback(error, "", "");
+          return;
+        }
+
+        outputDir = args[args.indexOf("--outdir") + 1];
+        writeFileSync(path.join(outputDir, "pleading.pdf"), "pdf output");
+        callback(null, "", "");
+      }
+    );
+
+    const { convertToPDF } = await import("../convert");
+    const result = await convertToPDF(
+      inputPath,
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+
+    expect(result.toString()).toBe("pdf output");
+    expect(execFileMock).toHaveBeenNthCalledWith(
+      1,
+      "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+      expect.any(Array),
+      { timeout: 60_000 },
+      expect.any(Function)
+    );
+    expect(execFileMock).toHaveBeenNthCalledWith(
+      2,
+      "soffice",
+      expect.any(Array),
+      { timeout: 60_000 },
+      expect.any(Function)
+    );
+
+    await fs.rm(inputDir, { recursive: true, force: true });
+  });
 });

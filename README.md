@@ -1,4 +1,4 @@
-# SBMA Legal Affairs
+# SBMA Legal Department
 
 Internal legal affairs document archive for managing case files with encrypted storage, access control, audit logging, and forensic watermarking.
 

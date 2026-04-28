@@ -1,4 +1,8 @@
-import { CreateBucketCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+import {
+  CreateBucketCommand,
+  HeadBucketCommand,
+  type BucketLocationConstraint,
+} from "@aws-sdk/client-s3";
 import { env } from "@/env";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
 
@@ -27,7 +31,19 @@ async function ensureStorageBucketOnce(): Promise<void> {
     }
   }
 
-  await s3Client.send(new CreateBucketCommand({ Bucket: BUCKET_NAME }));
+  await s3Client.send(
+    new CreateBucketCommand({
+      Bucket: BUCKET_NAME,
+      ...(env.S3_REGION === "us-east-1"
+        ? {}
+        : {
+            CreateBucketConfiguration: {
+              LocationConstraint:
+                env.S3_REGION as BucketLocationConstraint,
+            },
+          }),
+    })
+  );
 }
 
 export async function ensureStorageBucket(): Promise<void> {
