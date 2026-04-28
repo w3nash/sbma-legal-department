@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "postinstall": "prisma generate",
+    "worker:documents": "tsx workers/document-processing.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",

@@ -9,6 +9,7 @@ import {
   updateMemberRole,
   updateCaseAction,
 } from "@/app/(app)/cases/_actions";
+import type { CaseDocumentRow, CaseSummary } from "@/lib/case-data";
 import { casesQueryKeys } from "@/lib/query-keys";
 
 export type CaseRow = {
@@ -53,6 +54,40 @@ export function useCaseMembersQuery(caseId: string) {
       if (!res.ok) throw new Error("Failed to fetch members");
       return res.json() as Promise<CaseMemberRow[]>;
     },
+    refetchInterval: 5000,
+  });
+}
+
+export function useCaseSummaryQuery(caseId: string, initialData?: CaseSummary) {
+  return useQuery({
+    queryKey: casesQueryKeys.summary(caseId),
+    queryFn: async () => {
+      const res = await fetch(`/api/cases/${caseId}/summary`);
+      if (!res.ok) throw new Error("Failed to fetch case summary");
+      return res.json() as Promise<CaseSummary>;
+    },
+    initialData,
+    refetchInterval: (query) =>
+      query.state.data?.processingDocumentCount ? 2000 : 5000,
+  });
+}
+
+export function useCaseDocumentsQuery(
+  caseId: string,
+  initialData?: CaseDocumentRow[]
+) {
+  return useQuery({
+    queryKey: casesQueryKeys.documents(caseId),
+    queryFn: async () => {
+      const res = await fetch(`/api/cases/${caseId}/documents`);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+      return res.json() as Promise<CaseDocumentRow[]>;
+    },
+    initialData,
+    refetchInterval: (query) =>
+      query.state.data?.some((document) => document.status === "processing")
+        ? 2000
+        : 5000,
   });
 }
 

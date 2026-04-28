@@ -23,7 +23,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  uploadedDocuments Document[] @relation("UploadedBy")
+  uploadedDocuments Document[]   @relation("UploadedBy")
   caseMemberships   CaseMember[]
   auditLogs         AuditLog[]
   createdCases      Case[]
@@ -89,7 +89,7 @@ model Case {
   id          String     @id @default(uuid())
   title       String
   caseNumber  String
-  description String?  @db.VarChar(500)
+  description String?    @db.VarChar(500)
   status      CaseStatus @default(open)
   createdById String
   createdBy   User       @relation(fields: [createdById], references: [id])
@@ -128,24 +128,33 @@ enum CaseMemberRole {
 }
 
 model Document {
-  id                String   @id @default(uuid())
+  id                String         @id @default(uuid())
   caseId            String
-  case              Case     @relation(fields: [caseId], references: [id])
-  controlNumber     String   @unique
+  case              Case           @relation(fields: [caseId], references: [id])
+  controlNumber     String         @unique
+  status            DocumentStatus @default(processing)
   originalFilename  String
-  storedOriginalKey String
-  storedViewerKey   String
+  storedSourceKey   String?
+  storedOriginalKey String?
+  storedViewerKey   String?
   fileSizeBytes     BigInt?
   mimeType          String?
+  processingError   String?
   encryptionKey     String
   uploadedById      String
-  uploadedBy        User     @relation("UploadedBy", fields: [uploadedById], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  uploadedBy        User           @relation("UploadedBy", fields: [uploadedById], references: [id])
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   auditLogs AuditLog[]
 
   @@map("document")
+}
+
+enum DocumentStatus {
+  processing
+  ready
+  failed
 }
 
 model AuditLog {

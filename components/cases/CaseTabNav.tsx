@@ -2,33 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCaseSummaryQuery } from "@/hooks/use-cases";
+import type { CaseSummary } from "@/lib/case-data";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface CaseTabNavProps {
   caseId: string;
-  documentCount: number;
-  memberCount: number;
+  initialSummary: CaseSummary;
 }
 
-export function CaseTabNav({
-  caseId,
-  documentCount,
-  memberCount,
-}: CaseTabNavProps) {
+export function CaseTabNav({ caseId, initialSummary }: CaseTabNavProps) {
   const pathname = usePathname();
+  const { data: summary = initialSummary } = useCaseSummaryQuery(
+    caseId,
+    initialSummary
+  );
 
   const tabs = [
     {
       href: `/cases/${caseId}`,
       label: "Documents",
-      count: documentCount,
+      count: summary.documentCount,
       exact: true,
     },
     {
       href: `/cases/${caseId}/members`,
       label: "Members",
-      count: memberCount,
+      count: summary.memberCount,
       exact: false,
     },
   ];
@@ -54,6 +55,9 @@ export function CaseTabNav({
             <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
               {tab.count}
             </Badge>
+            {tab.exact && summary.processingDocumentCount > 0 ? (
+              <span className="size-1.5 rounded-full bg-chart-2" />
+            ) : null}
           </Link>
         );
       })}

@@ -24,9 +24,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DocumentEmptyState } from "@/components/cases/DocumentEmptyState";
 import { DataTableColumnHeader } from "@/components/data-table-column-header";
+import type { CaseDocumentRow } from "@/lib/case-data";
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
@@ -38,11 +40,13 @@ import {
 } from "@remixicon/react";
 
 export interface DocumentRow {
-  id: string;
-  controlNumber: string;
-  originalFilename: string;
-  createdAt: Date;
-  fileSizeBytes: number | null;
+  id: CaseDocumentRow["id"];
+  controlNumber: CaseDocumentRow["controlNumber"];
+  originalFilename: CaseDocumentRow["originalFilename"];
+  createdAt: CaseDocumentRow["createdAt"];
+  fileSizeBytes: CaseDocumentRow["fileSizeBytes"];
+  status: CaseDocumentRow["status"];
+  processingError: CaseDocumentRow["processingError"];
 }
 
 function formatBytes(bytes: number): string {
@@ -71,23 +75,58 @@ function DocumentCard({ doc, caseId }: { doc: DocumentRow; caseId: string }) {
     year: "numeric",
   });
 
+  const card = (
+    <div className="flex flex-col items-center rounded-xl p-3 transition-colors hover:bg-accent">
+      <div className="mb-2.5 text-primary/70">
+        <RiFileTextLine className="size-14" />
+      </div>
+      <div className="w-full space-y-1 text-center">
+        <p className="line-clamp-2 text-[12.5px] leading-snug font-medium">
+          {doc.originalFilename}
+        </p>
+        <p className="font-mono text-[10px] text-muted-foreground/60">
+          {doc.controlNumber}
+        </p>
+        <div className="flex justify-center">
+          <DocumentStatusBadge status={doc.status} />
+        </div>
+        <p className="text-[10px] text-muted-foreground/45">{dateLabel}</p>
+      </div>
+    </div>
+  );
+
+  if (doc.status !== "ready") {
+    return <div>{card}</div>;
+  }
+
   return (
     <Link href={`/cases/${caseId}/documents/${doc.id}`} className="group block">
-      <div className="flex flex-col items-center rounded-xl p-3 transition-colors hover:bg-accent">
-        <div className="mb-2.5 text-primary/70">
-          <RiFileTextLine className="size-14" />
-        </div>
-        <div className="w-full space-y-0.5 text-center">
-          <p className="line-clamp-2 text-[12.5px] leading-snug font-medium">
-            {doc.originalFilename}
-          </p>
-          <p className="font-mono text-[10px] text-muted-foreground/60">
-            {doc.controlNumber}
-          </p>
-          <p className="text-[10px] text-muted-foreground/45">{dateLabel}</p>
-        </div>
-      </div>
+      {card}
     </Link>
+  );
+}
+
+function DocumentStatusBadge({ status }: { status: DocumentRow["status"] }) {
+  if (status === "ready") {
+    return (
+      <Badge variant="secondary" className="h-5 text-[10px]">
+        Ready
+      </Badge>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <Badge variant="destructive" className="h-5 text-[10px]">
+        Failed
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="h-5 text-[10px]">
+      Processing
+    </Badge>
   );
 }
 
@@ -101,7 +140,7 @@ export function DocumentList({
   canUpload: boolean;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<"grid" | "list">("list");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
@@ -115,12 +154,9 @@ export function DocumentList({
           <DataTableColumnHeader column={column} title="Document" />
         ),
         cell: ({ row }) => {
-          const { id, originalFilename, controlNumber } = row.original;
-          return (
-            <Link
-              href={`/cases/${caseId}/documents/${id}`}
-              className="group flex items-center gap-3"
-            >
+          const { id, originalFilename, controlNumber, status } = row.original;
+          const content = (
+            <div className="group flex items-center gap-3">
               <RiFileTextLine className="size-8 shrink-0 text-primary/70" />
               <div className="min-w-0">
                 <p className="truncate font-medium group-hover:underline">
@@ -130,9 +166,30 @@ export function DocumentList({
                   {controlNumber}
                 </p>
               </div>
-            </Link>
+            </div>
+          );
+
+          if (status !== "ready") return content;
+
+          return (
+            <Link href={`/cases/${caseId}/documents/${id}`}>{content}</Link>
           );
         },
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <DocumentStatusBadge status={row.original.status} />
+            {row.original.status === "failed" &&
+            row.original.processingError ? (
+              <span className="line-clamp-1 text-xs text-muted-foreground">
+                {row.original.processingError}
+              </span>
+            ) : null}
+          </div>
+        ),
       },
       {
         accessorKey: "createdAt",
@@ -282,12 +339,15 @@ export function DocumentList({
                 rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    className="cursor-pointer"
-                    onClick={() =>
+                    className={
+                      row.original.status === "ready" ? "cursor-pointer" : ""
+                    }
+                    onClick={() => {
+                      if (row.original.status !== "ready") return;
                       router.push(
                         `/cases/${caseId}/documents/${row.original.id}`
-                      )
-                    }
+                      );
+                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
