@@ -45,13 +45,27 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/components/cases/DocumentPdfViewer", () => ({
+  DocumentPdfViewer: ({
+    src,
+    title,
+  }: {
+    src: string;
+    title: string;
+  }) => (
+    <div data-testid="document-pdf-viewer" data-src={src} data-title={title}>
+      PDF viewer for {title}
+    </div>
+  ),
+}));
+
 describe("document viewer page", () => {
   afterEach(() => {
     vi.resetAllMocks();
     vi.resetModules();
   });
 
-  it("renders a ready document with iframe and download action", async () => {
+  it("renders a ready document with the redesigned shell and pdf viewer", async () => {
     requireAuthMock.mockResolvedValue({
       user: { id: "user-1", role: UserRole.Member },
     });
@@ -59,6 +73,7 @@ describe("document viewer page", () => {
       id: "doc-1",
       caseId: "case-1",
       controlNumber: "CTRL-001",
+      downloadCount: 7,
       originalFilename: "Pleading.pdf",
       fileSizeBytes: BigInt(1024),
       mimeType: "application/pdf",
@@ -79,11 +94,17 @@ describe("document viewer page", () => {
     const html = renderToStaticMarkup(element);
 
     expect(html).toContain("Document Viewer");
+    expect(html).toContain("Cases");
+    expect(html).toContain("Documents");
     expect(html).toContain("Pleading.pdf");
     expect(html).toContain("CTRL-001");
+    expect(html).toContain("Copies Downloaded");
+    expect(html).toContain(">7<");
     expect(html).toContain("/api/documents/doc-1/download");
+    expect(html).toContain("PDF viewer for Pleading.pdf");
     expect(html).toContain("/api/documents/doc-1/viewer");
-    expect(html).toContain("iframe");
+    expect(html).not.toContain("Back to case");
+    expect(html).not.toContain("iframe");
   });
 
   it("renders a failed document without iframe or download action", async () => {
@@ -94,6 +115,7 @@ describe("document viewer page", () => {
       id: "doc-2",
       caseId: "case-1",
       controlNumber: "CTRL-002",
+      downloadCount: 0,
       originalFilename: "Evidence.docx",
       fileSizeBytes: null,
       mimeType:
@@ -118,6 +140,7 @@ describe("document viewer page", () => {
       "This document is not ready for inline viewing yet."
     );
     expect(html).toContain("LibreOffice failed");
+    expect(html).toContain("Copies Downloaded");
     expect(html).not.toContain("/api/documents/doc-2/download");
     expect(html).not.toContain("/api/documents/doc-2/viewer");
     expect(html).not.toContain("iframe");
@@ -131,6 +154,7 @@ describe("document viewer page", () => {
       id: "doc-3",
       caseId: "case-1",
       controlNumber: "CTRL-003",
+      downloadCount: 0,
       originalFilename: "Sealed.pdf",
       fileSizeBytes: BigInt(512),
       mimeType: "application/pdf",
@@ -161,6 +185,7 @@ describe("document viewer page", () => {
       id: "doc-4",
       caseId: "case-2",
       controlNumber: "CTRL-004",
+      downloadCount: 0,
       originalFilename: "Mismatch.pdf",
       fileSizeBytes: BigInt(256),
       mimeType: "application/pdf",
@@ -191,6 +216,7 @@ describe("document viewer page", () => {
       id: "doc-5",
       caseId: "case-1",
       controlNumber: "CTRL-005",
+      downloadCount: 0,
       originalFilename: "ReadyButMissing.pdf",
       fileSizeBytes: BigInt(128),
       mimeType: "application/pdf",

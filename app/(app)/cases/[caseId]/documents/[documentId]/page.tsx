@@ -1,14 +1,30 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DocumentPdfViewer } from "@/components/cases/DocumentPdfViewer";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DocumentStatus } from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth-guards";
-import { MembershipRole, UserRole } from "@/lib/constants";
+import { MembershipRole, Route, UserRole } from "@/lib/constants";
 import { canDownloadDocument, canViewCase } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { RiArrowLeftLine, RiDownloadLine } from "@remixicon/react";
+import { RiDownloadLine } from "@remixicon/react";
 
 function formatBytes(bytes: bigint | null): string {
   if (bytes === null) return "Unknown size";
@@ -63,6 +79,7 @@ export default async function DocumentViewerPage({
       id: true,
       caseId: true,
       controlNumber: true,
+      downloadCount: true,
       originalFilename: true,
       fileSizeBytes: true,
       mimeType: true,
@@ -120,27 +137,25 @@ export default async function DocumentViewerPage({
 
   return (
     <div className="space-y-6 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          nativeButton={false}
-          render={<Link href={`/cases/${caseId}`} />}
-        >
-          <RiArrowLeftLine className="size-4" />
-          Back to case
-        </Button>
-
-        {downloadAvailable ? (
-          <Button
-            nativeButton={false}
-            render={<a href={`/api/documents/${document.id}/download`} />}
-          >
-            <RiDownloadLine className="size-4" />
-            Download
-          </Button>
-        ) : null}
-      </div>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href={Route.Cases} />}>
+              Cases
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href={`/cases/${caseId}`} />}>
+              Documents
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{document.originalFilename}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <Card>
         <CardHeader className="gap-3">
@@ -170,7 +185,7 @@ export default async function DocumentViewerPage({
 
           <Separator />
 
-          <dl className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-4">
+          <dl className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-5">
             <div className="space-y-1">
               <dt className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 Uploaded
@@ -190,6 +205,12 @@ export default async function DocumentViewerPage({
               <dd className="break-all">
                 {document.mimeType ?? "Unknown type"}
               </dd>
+            </div>
+            <div className="space-y-1">
+              <dt className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                Copies Downloaded
+              </dt>
+              <dd>{document.downloadCount}</dd>
             </div>
             <div className="space-y-1">
               <dt className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
@@ -218,14 +239,26 @@ export default async function DocumentViewerPage({
       <Card className="min-h-[28rem]">
         <CardHeader>
           <CardTitle>Viewer</CardTitle>
+          <CardDescription>
+            Review the read-only viewer copy for this case document.
+          </CardDescription>
+          {downloadAvailable ? (
+            <CardAction>
+              <Button
+                nativeButton={false}
+                render={<a href={`/api/documents/${document.id}/download`} />}
+              >
+                <RiDownloadLine className="size-4" />
+                Download
+              </Button>
+            </CardAction>
+          ) : null}
         </CardHeader>
         <CardContent className="flex min-h-[24rem] flex-1">
           {viewerAvailable ? (
-            <iframe
-              key={document.id}
+            <DocumentPdfViewer
               src={`/api/documents/${document.id}/viewer`}
               title={document.originalFilename}
-              className="min-h-[24rem] w-full rounded-lg border bg-background"
             />
           ) : (
             <div className="flex min-h-[24rem] w-full items-center justify-center rounded-lg border border-dashed bg-muted/25 p-6 text-center">
