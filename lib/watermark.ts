@@ -1,21 +1,24 @@
-import { PDFDocument, degrees, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 
 export async function addWatermark(
   pdfBuffer: Buffer,
-  text: string,
+  text: string | string[],
 ): Promise<Buffer> {
   const pdf = await PDFDocument.load(pdfBuffer);
   const pages = pdf.getPages();
+  const lines = Array.isArray(text) ? text : [text];
 
   for (const page of pages) {
     const { height } = page.getSize();
-    page.drawText(text, {
-      x: 30,
-      y: height - 30,
-      size: 10,
-      color: rgb(0.5, 0.5, 0.5),
-      rotate: degrees(-15),
-      opacity: 0.4,
+
+    lines.forEach((line, index) => {
+      page.drawText(line, {
+        x: 30,
+        y: height - 30 - index * 14,
+        size: 10,
+        color: rgb(0.5, 0.5, 0.5),
+        opacity: 0.4,
+      });
     });
   }
 

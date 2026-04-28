@@ -5,6 +5,7 @@ import { MembershipRole, UserRole } from "@/lib/constants";
 
 const requireAuthMock = vi.hoisted(() => vi.fn());
 const documentFindUniqueMock = vi.hoisted(() => vi.fn());
+const queryRawMock = vi.hoisted(() => vi.fn());
 const redisIncrMock = vi.hoisted(() => vi.fn());
 const redisExpireMock = vi.hoisted(() => vi.fn());
 const redisTtlMock = vi.hoisted(() => vi.fn());
@@ -23,6 +24,7 @@ vi.mock("@/lib/prisma", () => ({
     document: {
       findUnique: documentFindUniqueMock,
     },
+    $queryRaw: queryRawMock,
   },
 }));
 
@@ -82,6 +84,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     redisIncrMock.mockResolvedValue(1);
     redisExpireMock.mockResolvedValue(1);
     redisTtlMock.mockResolvedValue(3599);
+    queryRawMock.mockResolvedValue([{ downloadCount: 7 }]);
     s3SendMock.mockResolvedValue({
       Body: {
         transformToByteArray: vi
@@ -120,6 +123,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
     expect(redisIncrMock).toHaveBeenCalledWith("download:user-1:doc-1");
     expect(redisExpireMock).toHaveBeenCalledWith("download:user-1:doc-1", 3600);
+    expect(queryRawMock).toHaveBeenCalledTimes(1);
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         input: {
@@ -136,7 +140,14 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
     expect(addWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      "Control Number: CTRL-123 | User: Taylor Test | Email: taylor@example.com | IP: 203.0.113.1 | Timestamp: 2026-04-28T08:09:10.000Z"
+      [
+        "Control Number: CTRL-123",
+        "Copy Number: 7",
+        "User: Taylor Test",
+        "Email: taylor@example.com",
+        "IP: 203.0.113.1",
+        "Timestamp: 2026-04-28T08:09:10.000Z",
+      ]
     );
     expect(logAuditMock).toHaveBeenCalledWith({
       action: "DOWNLOAD",
@@ -147,6 +158,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       userAgent: "Vitest",
       metadata: {
         controlNumber: "CTRL-123",
+        copyNumber: 7,
         downloadedAt: "2026-04-28T08:09:10.000Z",
       },
     });
@@ -183,6 +195,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ message: "Unauthorized" });
     expect(redisIncrMock).not.toHaveBeenCalled();
+    expect(queryRawMock).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
   });
 
@@ -210,6 +223,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Document is not ready for download",
     });
     expect(redisIncrMock).not.toHaveBeenCalled();
+    expect(queryRawMock).not.toHaveBeenCalled();
   });
 
   it("returns 409 when the original artifact key is missing", async () => {
@@ -236,6 +250,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Original document is unavailable",
     });
     expect(redisIncrMock).not.toHaveBeenCalled();
+    expect(queryRawMock).not.toHaveBeenCalled();
   });
 
   it("returns 429 with retry-after when the user exceeds the fixed window limit", async () => {
@@ -253,6 +268,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Download limit exceeded",
     });
     expect(redisExpireMock).not.toHaveBeenCalled();
+    expect(queryRawMock).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
     expect(logAuditMock).not.toHaveBeenCalled();
   });
@@ -309,7 +325,14 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(response.status).toBe(200);
     expect(addWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      "Control Number: CTRL-123 | User: ???? | Email: te?st@example.com | IP: 203.0.113.1 | Timestamp: 2026-04-28T08:09:10.000Z"
+      [
+        "Control Number: CTRL-123",
+        "Copy Number: 7",
+        "User: ????",
+        "Email: te?st@example.com",
+        "IP: 203.0.113.1",
+        "Timestamp: 2026-04-28T08:09:10.000Z",
+      ]
     );
   });
 });

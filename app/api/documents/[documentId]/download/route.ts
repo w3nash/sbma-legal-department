@@ -1,5 +1,5 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { DocumentStatus } from "@/generated/prisma/client";
+import { DocumentStatus, Prisma } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { logAudit } from "@/lib/audit";
 import { requireAuth } from "@/lib/auth-guards";
@@ -159,6 +159,20 @@ export async function GET(
   }
 
   try {
+    const [downloadCounter] = await prisma.$queryRaw<Array<{ downloadCount: number }>>(
+      Prisma.sql`
+        UPDATE "document"
+        SET "downloadCount" = "downloadCount" + 1
+        WHERE "id" = ${doc.id}
+        RETURNING "downloadCount"
+      `
+    );
+
+    if (!downloadCounter) {
+      throw new Error("Document download counter could not be allocated");
+    }
+
+    const { downloadCount } = downloadCounter;
     const s3Object = await s3Client.send(
       new GetObjectCommand({
         Bucket: BUCKET_NAME,
@@ -172,11 +186,12 @@ export async function GET(
     const downloadedAt = new Date().toISOString();
     const watermark = [
       `Control Number: ${toPdfTextSafe(doc.controlNumber, "unknown")}`,
+      `Copy Number: ${downloadCount}`,
       `User: ${toPdfTextSafe(user.name, "Unknown User")}`,
       `Email: ${toPdfTextSafe(user.email, "unknown")}`,
       `IP: ${toPdfTextSafe(ipAddress, "unknown")}`,
       `Timestamp: ${downloadedAt}`,
-    ].join(" | ");
+    ];
     const watermarkedPdf = await addWatermark(originalPdf, watermark);
 
     await logAudit({
@@ -188,6 +203,7 @@ export async function GET(
       userAgent: request.headers.get("user-agent") ?? undefined,
       metadata: {
         controlNumber: doc.controlNumber,
+        copyNumber: downloadCount,
         downloadedAt,
       },
     });
