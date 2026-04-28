@@ -64,6 +64,8 @@ describe("document viewer page", () => {
       mimeType: "application/pdf",
       processingError: null,
       status: DocumentStatus.ready,
+      storedOriginalKey: "documents/case-1/CTRL-001/original.enc",
+      storedViewerKey: "documents/case-1/CTRL-001/viewer.enc",
       createdAt: new Date("2026-04-28T00:00:00.000Z"),
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Viewer }],
@@ -98,6 +100,8 @@ describe("document viewer page", () => {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       processingError: "LibreOffice failed",
       status: DocumentStatus.failed,
+      storedOriginalKey: null,
+      storedViewerKey: null,
       createdAt: new Date("2026-04-28T00:00:00.000Z"),
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Viewer }],
@@ -132,6 +136,8 @@ describe("document viewer page", () => {
       mimeType: "application/pdf",
       processingError: null,
       status: DocumentStatus.ready,
+      storedOriginalKey: "documents/case-1/CTRL-003/original.enc",
+      storedViewerKey: "documents/case-1/CTRL-003/viewer.enc",
       createdAt: new Date("2026-04-28T00:00:00.000Z"),
       case: {
         members: [],
@@ -160,6 +166,8 @@ describe("document viewer page", () => {
       mimeType: "application/pdf",
       processingError: null,
       status: DocumentStatus.ready,
+      storedOriginalKey: "documents/case-2/CTRL-004/original.enc",
+      storedViewerKey: "documents/case-2/CTRL-004/viewer.enc",
       createdAt: new Date("2026-04-28T00:00:00.000Z"),
       case: {
         members: [],
@@ -173,5 +181,40 @@ describe("document viewer page", () => {
         params: Promise.resolve({ caseId: "case-1", documentId: "doc-4" }),
       })
     ).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+
+  it("suppresses viewer and download actions when artifacts are missing", async () => {
+    requireAuthMock.mockResolvedValue({
+      user: { id: "user-1", role: UserRole.Member },
+    });
+    documentFindUniqueMock.mockResolvedValue({
+      id: "doc-5",
+      caseId: "case-1",
+      controlNumber: "CTRL-005",
+      originalFilename: "ReadyButMissing.pdf",
+      fileSizeBytes: BigInt(128),
+      mimeType: "application/pdf",
+      processingError: null,
+      status: DocumentStatus.ready,
+      storedOriginalKey: null,
+      storedViewerKey: null,
+      createdAt: new Date("2026-04-28T00:00:00.000Z"),
+      case: {
+        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+      },
+    });
+
+    const { default: DocumentViewerPage } = await import("./page");
+    const element = await DocumentViewerPage({
+      params: Promise.resolve({ caseId: "case-1", documentId: "doc-5" }),
+    });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain(
+      "This document finished processing, but its viewer copy is unavailable right now."
+    );
+    expect(html).not.toContain("/api/documents/doc-5/download");
+    expect(html).not.toContain("/api/documents/doc-5/viewer");
+    expect(html).not.toContain("iframe");
   });
 });

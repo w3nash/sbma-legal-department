@@ -68,6 +68,8 @@ export default async function DocumentViewerPage({
       mimeType: true,
       processingError: true,
       status: true,
+      storedOriginalKey: true,
+      storedViewerKey: true,
       createdAt: true,
       case: {
         select: {
@@ -99,7 +101,17 @@ export default async function DocumentViewerPage({
 
   const canDownload = canDownloadDocument({ role: userRole }, memberRole);
   const status = statusCopy[document.status];
-  const isReady = document.status === DocumentStatus.ready;
+  const viewerAvailable =
+    document.status === DocumentStatus.ready &&
+    document.storedViewerKey !== null;
+  const downloadAvailable =
+    canDownload &&
+    document.status === DocumentStatus.ready &&
+    document.storedOriginalKey !== null;
+  const availabilityDescription =
+    document.status === DocumentStatus.ready && !viewerAvailable
+      ? "This document finished processing, but its viewer copy is unavailable right now."
+      : status.description;
   const createdAt = document.createdAt.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -119,7 +131,7 @@ export default async function DocumentViewerPage({
           Back to case
         </Button>
 
-        {isReady && canDownload ? (
+        {downloadAvailable ? (
           <Button
             nativeButton={false}
             render={<a href={`/api/documents/${document.id}/download`} />}
@@ -183,7 +195,7 @@ export default async function DocumentViewerPage({
               <dt className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 Availability
               </dt>
-              <dd>{status.description}</dd>
+              <dd>{availabilityDescription}</dd>
             </div>
           </dl>
 
@@ -208,7 +220,7 @@ export default async function DocumentViewerPage({
           <CardTitle>Viewer</CardTitle>
         </CardHeader>
         <CardContent className="flex min-h-[24rem] flex-1">
-          {isReady ? (
+          {viewerAvailable ? (
             <iframe
               key={document.id}
               src={`/api/documents/${document.id}/viewer`}
@@ -222,7 +234,7 @@ export default async function DocumentViewerPage({
                   This document is not ready for inline viewing yet.
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {status.description}
+                  {availabilityDescription}
                 </p>
               </div>
             </div>
