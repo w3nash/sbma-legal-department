@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
+import { isCaseDocumentDetailPath } from "@/components/cases/CaseDetailShell";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -36,6 +37,10 @@ export function AppBreadcrumb() {
 
   // Dynamic breadcrumb for case detail routes
   if (params.caseId) {
+    if (isCaseDocumentDetailPath(pathname)) {
+      return null;
+    }
+
     const segments: BreadcrumbSegment[] = [{ label: "Cases", href: Route.Cases }];
 
     if (pathname.includes("/upload")) {
