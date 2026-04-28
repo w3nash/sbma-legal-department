@@ -2,7 +2,15 @@ import crypto from "crypto";
 import { env } from "@/env";
 
 function getMasterKey(): Buffer {
-  return Buffer.from(env.MASTER_ENCRYPTION_KEY, "base64");
+  const key = Buffer.from(env.MASTER_ENCRYPTION_KEY, "base64");
+
+  if (key.length !== 32) {
+    throw new Error(
+      "MASTER_ENCRYPTION_KEY must be a base64-encoded 32-byte key"
+    );
+  }
+
+  return key;
 }
 
 export function generateFileKey(): string {

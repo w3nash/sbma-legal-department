@@ -5,7 +5,8 @@ RUN apk add --no-cache libreoffice
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
 RUN npm ci
 
 COPY . .

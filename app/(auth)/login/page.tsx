@@ -84,7 +84,7 @@ export default function LoginPage() {
           </div>
           <div className="text-center">
             <h1 className="font-serif text-3xl font-semibold tracking-wide text-white">
-              SBMA Legal Affairs
+              SBMA Legal Department
             </h1>
             <div className="mt-2 flex items-center justify-center gap-3">
               <div className="h-px w-8 bg-[#c9a84c]/40" />
@@ -97,7 +97,7 @@ export default function LoginPage() {
         </div>
 
         <div className="absolute bottom-10 text-xs tracking-widest text-white/30 uppercase">
-          &copy; {new Date().getFullYear()} SBMA Legal Affairs
+          &copy; {new Date().getFullYear()} SBMA Legal Department
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
             className="rounded"
           />
           <span className="text-lg font-semibold text-[#0a1628] dark:text-[#e8e2d4]">
-            SBMA Legal Affairs
+            SBMA Legal Department
           </span>
         </div>
 

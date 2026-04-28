@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { DocumentStatus } from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth-guards";
+import type { CaseSummary } from "@/lib/case-data";
 import { MembershipRole, UserRole } from "@/lib/constants";
 import { canViewCase } from "@/lib/permissions";
-import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _: Request,
@@ -14,7 +16,10 @@ export async function GET(
 
   const c = await prisma.case.findUnique({
     where: { id: caseId },
-    select: { members: { select: { userId: true, role: true } } },
+    select: {
+      members: { select: { userId: true, role: true } },
+      _count: { select: { documents: true, members: true } },
+    },
   });
 
   if (!c) {
@@ -32,10 +37,15 @@ export async function GET(
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
 
-  const members = await prisma.caseMember.findMany({
-    where: { caseId },
-    include: { user: { select: { id: true, name: true, email: true } } },
+  const processingDocumentCount = await prisma.document.count({
+    where: { caseId, status: DocumentStatus.processing },
   });
 
-  return NextResponse.json(members);
+  const summary: CaseSummary = {
+    documentCount: c._count.documents,
+    memberCount: c._count.members,
+    processingDocumentCount,
+  };
+
+  return NextResponse.json(summary);
 }

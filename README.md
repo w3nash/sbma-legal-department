@@ -1,4 +1,4 @@
-# SBMA Legal Affairs
+# SBMA Legal Department
 
 Internal legal affairs document archive for managing case files with encrypted storage, access control, audit logging, and forensic watermarking.
 
@@ -63,14 +63,16 @@ npm run db:seed    # seeds admin@sbma.legal
 
 ```bash
 npm run dev
+npm run worker:documents
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Log in with `admin@sbma.legal` / `changeme123` (seed default).
+Open [http://localhost:3000](http://localhost:3000). Log in with `admin@sbma.legal` / `password123` (seed default).
 
 ## Scripts
 
 ```bash
 npm run dev          # Dev server with Turbopack
+npm run workers:documents
 npm run build        # Production build
 npm run lint         # ESLint
 npm run format       # Prettier

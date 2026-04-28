@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth-guards";
 import { notFound, redirect } from "next/navigation";
 import { canViewCase, canManageCase } from "@/lib/permissions";
 import { UserRole, type MembershipRole } from "@/lib/constants";
+import { DocumentStatus } from "@/generated/prisma/client";
 import Link from "next/link";
 import { CaseTabNav } from "@/components/cases/CaseTabNav";
 import { LegalFolderIcon } from "@/components/cases/CaseCard";
@@ -56,6 +57,14 @@ export default async function CaseDetailLayout({
     day: "numeric",
     year: "numeric",
   });
+  const processingDocumentCount = await prisma.document.count({
+    where: { caseId, status: DocumentStatus.processing },
+  });
+  const initialSummary = {
+    documentCount: c._count.documents,
+    memberCount: c._count.members,
+    processingDocumentCount,
+  };
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -99,11 +108,7 @@ export default async function CaseDetailLayout({
         </div>
       </div>
 
-      <CaseTabNav
-        caseId={caseId}
-        documentCount={c._count.documents}
-        memberCount={c._count.members}
-      />
+      <CaseTabNav caseId={caseId} initialSummary={initialSummary} />
 
       <div className="min-h-0 flex-1">{children}</div>
 

@@ -52,7 +52,7 @@ export function DocumentEmptyState({
         {canUpload && (
           <Button onClick={() => router.push(`/cases/${caseId}/upload`)}>
             <RiUploadLine className="mr-1 size-4" />
-            Upload Document
+            Upload Documents
           </Button>
         )}
       </div>

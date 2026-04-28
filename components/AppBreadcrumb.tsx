@@ -36,24 +36,39 @@ export function AppBreadcrumb() {
 
   // Dynamic breadcrumb for case detail routes
   if (params.caseId) {
-    const section = pathname.includes("/members")
-      ? "Members"
-      : pathname.includes("/settings")
-        ? "Settings"
-        : "Documents";
+    const segments: BreadcrumbSegment[] = [{ label: "Cases", href: Route.Cases }];
+
+    if (pathname.includes("/upload")) {
+      segments.push({ label: "Upload" });
+    } else if (pathname.includes("/members")) {
+      segments.push({ label: "Members" });
+    } else if (pathname.includes("/settings")) {
+      segments.push({ label: "Settings" });
+    } else {
+      segments.push({ label: "Documents" });
+    }
 
     return (
       <Breadcrumb>
         <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href={Route.Cases} />}>
-              Cases
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{section}</BreadcrumbPage>
-          </BreadcrumbItem>
+          {segments.map((segment, index) => {
+            const isLast = index === segments.length - 1;
+
+            return (
+              <React.Fragment key={segment.label}>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage>{segment.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink render={<Link href={segment.href ?? "#"} />}>
+                      {segment.label}
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+              </React.Fragment>
+            );
+          })}
         </BreadcrumbList>
       </Breadcrumb>
     );

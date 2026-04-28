@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { canManageCase } from "@/lib/permissions";
 import { UserRole } from "@/lib/constants";
 import { CaseMembersContent } from "./content";
-import { MembersReadOnlyTable } from "@/components/cases/MembersReadOnlyTable";
+import { MembersReadOnlyContent } from "@/components/cases/MembersReadOnlyContent";
 import { RiGroup3Line } from "@remixicon/react";
 
 export default async function CaseMembersPage({
@@ -31,13 +31,13 @@ export default async function CaseMembersPage({
 
   if (!c) notFound();
 
-  if (isAdmin) {
-    const queryClient = getQueryClient();
-    await queryClient.prefetchQuery({
-      queryKey: casesQueryKeys.members(caseId),
-      queryFn: () => c.members,
-    });
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: casesQueryKeys.members(caseId),
+    queryFn: () => c.members,
+  });
 
+  if (isAdmin) {
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
         <CaseMembersContent caseId={caseId} />
@@ -80,5 +80,9 @@ export default async function CaseMembersPage({
     );
   }
 
-  return <MembersReadOnlyTable members={c.members} />;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <MembersReadOnlyContent caseId={caseId} initialMembers={c.members} />
+    </HydrationBoundary>
+  );
 }

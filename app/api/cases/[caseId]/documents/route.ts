@@ -1,8 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-guards";
+import type { CaseDocumentRow } from "@/lib/case-data";
 import { MembershipRole, UserRole } from "@/lib/constants";
 import { canViewCase } from "@/lib/permissions";
-import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _: Request,
@@ -14,7 +15,10 @@ export async function GET(
 
   const c = await prisma.case.findUnique({
     where: { id: caseId },
-    select: { members: { select: { userId: true, role: true } } },
+    include: {
+      members: { select: { userId: true, role: true } },
+      documents: { orderBy: { createdAt: "desc" } },
+    },
   });
 
   if (!c) {
@@ -32,10 +36,16 @@ export async function GET(
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
 
-  const members = await prisma.caseMember.findMany({
-    where: { caseId },
-    include: { user: { select: { id: true, name: true, email: true } } },
-  });
+  const documents: CaseDocumentRow[] = c.documents.map((doc) => ({
+    id: doc.id,
+    controlNumber: doc.controlNumber,
+    originalFilename: doc.originalFilename,
+    createdAt: doc.createdAt.toISOString(),
+    fileSizeBytes:
+      doc.fileSizeBytes !== null ? Number(doc.fileSizeBytes) : null,
+    status: doc.status,
+    processingError: doc.processingError,
+  }));
 
-  return NextResponse.json(members);
+  return NextResponse.json(documents);
 }

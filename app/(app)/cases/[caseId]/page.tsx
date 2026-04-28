@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guards";
 import { notFound } from "next/navigation";
+import type { CaseDocumentRow } from "@/lib/case-data";
 import { canUploadToCase } from "@/lib/permissions";
 import { UserRole, type MembershipRole } from "@/lib/constants";
-import { DocumentList } from "@/components/cases/DocumentList";
+import { CaseDocumentsContent } from "./content";
 
 export default async function CaseDocumentsPage({
   params,
@@ -31,16 +32,22 @@ export default async function CaseDocumentsPage({
     : null;
   const canUpload = canUploadToCase({ role: userRole }, memberRole);
 
-  const documents = c.documents.map((doc) => ({
+  const documents: CaseDocumentRow[] = c.documents.map((doc) => ({
     id: doc.id,
     controlNumber: doc.controlNumber,
     originalFilename: doc.originalFilename,
-    createdAt: doc.createdAt,
+    createdAt: doc.createdAt.toISOString(),
     fileSizeBytes:
       doc.fileSizeBytes !== null ? Number(doc.fileSizeBytes) : null,
+    status: doc.status,
+    processingError: doc.processingError,
   }));
 
   return (
-    <DocumentList documents={documents} caseId={caseId} canUpload={canUpload} />
+    <CaseDocumentsContent
+      caseId={caseId}
+      canUpload={canUpload}
+      initialDocuments={documents}
+    />
   );
 }

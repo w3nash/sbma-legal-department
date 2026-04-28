@@ -1,7 +1,11 @@
+import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/utils";
 import { RiLoaderLine } from "@remixicon/react";
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+function Spinner({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<typeof RiLoaderLine>) {
   return (
     <RiLoaderLine
       role="status"
