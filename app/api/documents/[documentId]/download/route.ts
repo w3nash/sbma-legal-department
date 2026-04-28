@@ -1,5 +1,5 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { DocumentStatus, Prisma } from "@/generated/prisma/client";
+import { DocumentStatus } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { logAudit } from "@/lib/audit";
 import { requireAuth } from "@/lib/auth-guards";
@@ -159,20 +159,6 @@ export async function GET(
   }
 
   try {
-    const [downloadCounter] = await prisma.$queryRaw<Array<{ downloadCount: number }>>(
-      Prisma.sql`
-        UPDATE "document"
-        SET "downloadCount" = "downloadCount" + 1
-        WHERE "id" = ${doc.id}
-        RETURNING "downloadCount"
-      `
-    );
-
-    if (!downloadCounter) {
-      throw new Error("Document download counter could not be allocated");
-    }
-
-    const { downloadCount } = downloadCounter;
     const s3Object = await s3Client.send(
       new GetObjectCommand({
         Bucket: BUCKET_NAME,
@@ -182,6 +168,17 @@ export async function GET(
     const encryptedOriginal = await bodyToBuffer(s3Object.Body);
     const fileKey = decryptKey(doc.encryptionKey);
     const originalPdf = decryptFile(encryptedOriginal, fileKey);
+    const { downloadCount } = await prisma.document.update({
+      where: { id: doc.id },
+      data: {
+        downloadCount: {
+          increment: 1,
+        },
+      },
+      select: {
+        downloadCount: true,
+      },
+    });
     const ipAddress = extractClientIp(request.headers.get("x-forwarded-for"));
     const downloadedAt = new Date().toISOString();
     const watermark = [

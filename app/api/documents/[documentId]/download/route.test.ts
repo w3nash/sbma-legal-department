@@ -5,7 +5,7 @@ import { MembershipRole, UserRole } from "@/lib/constants";
 
 const requireAuthMock = vi.hoisted(() => vi.fn());
 const documentFindUniqueMock = vi.hoisted(() => vi.fn());
-const queryRawMock = vi.hoisted(() => vi.fn());
+const documentUpdateMock = vi.hoisted(() => vi.fn());
 const redisIncrMock = vi.hoisted(() => vi.fn());
 const redisExpireMock = vi.hoisted(() => vi.fn());
 const redisTtlMock = vi.hoisted(() => vi.fn());
@@ -23,8 +23,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     document: {
       findUnique: documentFindUniqueMock,
+      update: documentUpdateMock,
     },
-    $queryRaw: queryRawMock,
   },
 }));
 
@@ -84,7 +84,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     redisIncrMock.mockResolvedValue(1);
     redisExpireMock.mockResolvedValue(1);
     redisTtlMock.mockResolvedValue(3599);
-    queryRawMock.mockResolvedValue([{ downloadCount: 7 }]);
+    documentUpdateMock.mockResolvedValue({ downloadCount: 7 });
     s3SendMock.mockResolvedValue({
       Body: {
         transformToByteArray: vi
@@ -123,7 +123,6 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
     expect(redisIncrMock).toHaveBeenCalledWith("download:user-1:doc-1");
     expect(redisExpireMock).toHaveBeenCalledWith("download:user-1:doc-1", 3600);
-    expect(queryRawMock).toHaveBeenCalledTimes(1);
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         input: {
@@ -137,6 +136,26 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(decryptFileMock).toHaveBeenCalledWith(
       Buffer.from([1, 2, 3]),
       "file-key"
+    );
+    expect(documentUpdateMock).toHaveBeenCalledWith({
+      where: { id: "doc-1" },
+      data: {
+        downloadCount: {
+          increment: 1,
+        },
+      },
+      select: {
+        downloadCount: true,
+      },
+    });
+    expect(s3SendMock.mock.invocationCallOrder[0]).toBeLessThan(
+      documentUpdateMock.mock.invocationCallOrder[0]
+    );
+    expect(decryptFileMock.mock.invocationCallOrder[0]).toBeLessThan(
+      documentUpdateMock.mock.invocationCallOrder[0]
+    );
+    expect(documentUpdateMock.mock.invocationCallOrder[0]).toBeLessThan(
+      addWatermarkMock.mock.invocationCallOrder[0]
     );
     expect(addWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
@@ -195,7 +214,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ message: "Unauthorized" });
     expect(redisIncrMock).not.toHaveBeenCalled();
-    expect(queryRawMock).not.toHaveBeenCalled();
+    expect(documentUpdateMock).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
   });
 
@@ -223,7 +242,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Document is not ready for download",
     });
     expect(redisIncrMock).not.toHaveBeenCalled();
-    expect(queryRawMock).not.toHaveBeenCalled();
+    expect(documentUpdateMock).not.toHaveBeenCalled();
   });
 
   it("returns 409 when the original artifact key is missing", async () => {
@@ -250,7 +269,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Original document is unavailable",
     });
     expect(redisIncrMock).not.toHaveBeenCalled();
-    expect(queryRawMock).not.toHaveBeenCalled();
+    expect(documentUpdateMock).not.toHaveBeenCalled();
   });
 
   it("returns 429 with retry-after when the user exceeds the fixed window limit", async () => {
@@ -268,7 +287,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Download limit exceeded",
     });
     expect(redisExpireMock).not.toHaveBeenCalled();
-    expect(queryRawMock).not.toHaveBeenCalled();
+    expect(documentUpdateMock).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
     expect(logAuditMock).not.toHaveBeenCalled();
   });
@@ -289,6 +308,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(await response.json()).toEqual({
       message: "Document storage unavailable",
     });
+    expect(documentUpdateMock).not.toHaveBeenCalled();
     expect(addWatermarkMock).not.toHaveBeenCalled();
     expect(logAuditMock).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
