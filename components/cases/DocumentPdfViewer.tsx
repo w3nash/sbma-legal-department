@@ -19,21 +19,12 @@ type DocumentPdfViewerProps = {
   title: string;
 };
 
-export function DocumentPdfViewer({
-  src,
-  title,
-}: DocumentPdfViewerProps) {
+export function DocumentPdfViewer({ src, title }: DocumentPdfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [scale, setScale] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setNumPages(null);
-    setScale(1);
-    setLoadError(null);
-  }, [src]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -57,7 +48,9 @@ export function DocumentPdfViewer({
 
   const paperWidth = Math.min(Math.max(containerWidth - 24, 0), 816);
   const pageWidth = paperWidth > 0 ? Math.floor(paperWidth) : 816;
-  const renderedPages = numPages ? Array.from({ length: numPages }, (_, index) => index + 1) : [];
+  const renderedPages = numPages
+    ? Array.from({ length: numPages }, (_, index) => index + 1)
+    : [];
 
   return (
     <div className="flex min-h-[24rem] flex-1 flex-col gap-4">
@@ -112,6 +105,7 @@ export function DocumentPdfViewer({
           </div>
         ) : (
           <Document
+            key={src}
             file={src}
             loading={
               <div className="mx-auto w-full max-w-[8.5in] rounded-md border border-border/80 bg-white p-6 shadow-sm">

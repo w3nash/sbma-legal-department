@@ -310,9 +310,8 @@ describe("document viewer page", () => {
       };
     });
 
-    const { DocumentPdfViewer } = await import(
-      "@/components/cases/DocumentPdfViewer"
-    );
+    const { DocumentPdfViewer } =
+      await import("@/components/cases/DocumentPdfViewer");
     const html = renderToStaticMarkup(
       <DocumentPdfViewer
         src="/api/documents/doc-1/viewer"

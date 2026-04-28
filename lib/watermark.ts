@@ -2,7 +2,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 
 export async function addWatermark(
   pdfBuffer: Buffer,
-  text: string | string[],
+  text: string | string[]
 ): Promise<Buffer> {
   const pdf = await PDFDocument.load(pdfBuffer);
   const pages = pdf.getPages();
