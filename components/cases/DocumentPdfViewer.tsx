@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { pdfjs, Document, Page } from "react-pdf";
-import {
-  RiAddLine,
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-  RiSubtractLine,
-} from "@remixicon/react";
+import { RiAddLine, RiSubtractLine } from "@remixicon/react";
 import { Button } from "@/components/ui/button";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -31,13 +26,11 @@ export function DocumentPdfViewer({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setNumPages(null);
-    setPageNumber(1);
     setScale(1);
     setLoadError(null);
   }, [src]);
@@ -62,43 +55,16 @@ export function DocumentPdfViewer({
     };
   }, []);
 
-  const canGoPrevious = pageNumber > 1;
-  const canGoNext = numPages !== null && pageNumber < numPages;
-  const pageWidth = containerWidth > 0 ? Math.floor(containerWidth) : undefined;
+  const paperWidth = Math.min(Math.max(containerWidth - 24, 0), 816);
+  const pageWidth = paperWidth > 0 ? Math.floor(paperWidth) : 816;
+  const renderedPages = numPages ? Array.from({ length: numPages }, (_, index) => index + 1) : [];
 
   return (
     <div className="flex min-h-[24rem] flex-1 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2">
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            onClick={() => setPageNumber((current) => Math.max(1, current - 1))}
-            disabled={!canGoPrevious}
-            aria-label="Previous page"
-          >
-            <RiArrowLeftSLine className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            onClick={() =>
-              setPageNumber((current) =>
-                numPages === null ? current : Math.min(numPages, current + 1)
-              )
-            }
-            disabled={!canGoNext}
-            aria-label="Next page"
-          >
-            <RiArrowRightSLine className="size-4" />
-          </Button>
-          <span className="min-w-24 text-sm text-muted-foreground">
-            Page {pageNumber}
-            {numPages ? ` of ${numPages}` : ""}
-          </span>
-        </div>
+        <span className="min-w-24 text-sm text-muted-foreground">
+          {numPages ? `${numPages} pages` : "Preparing pages"}
+        </span>
 
         <div className="flex items-center gap-1">
           <Button
@@ -148,36 +114,44 @@ export function DocumentPdfViewer({
           <Document
             file={src}
             loading={
-              <p className="py-12 text-sm text-muted-foreground">
-                Loading viewer copy...
-              </p>
+              <div className="mx-auto w-full max-w-[8.5in] rounded-md border border-border/80 bg-white p-6 shadow-sm">
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  Loading viewer copy...
+                </p>
+              </div>
             }
             onLoadSuccess={({ numPages: loadedPages }) => {
               setLoadError(null);
               setNumPages(loadedPages);
-              setPageNumber((current) => Math.min(current, loadedPages));
             }}
             onLoadError={(error) => {
               setNumPages(null);
-              setPageNumber(1);
               setLoadError(error.message);
             }}
           >
-            <Page
-              key={`${src}-${pageNumber}-${scale}-${pageWidth ?? "auto"}`}
-              pageNumber={pageNumber}
-              width={pageWidth}
-              scale={scale}
-              renderAnnotationLayer={false}
-              renderTextLayer={false}
-              loading={
-                <p className="py-12 text-sm text-muted-foreground">
-                  Rendering page...
-                </p>
-              }
-              className="shadow-sm"
-              canvasBackground="white"
-            />
+            <div className="mx-auto flex w-full max-w-[8.5in] flex-col gap-6">
+              {renderedPages.map((pageNumber) => (
+                <div
+                  key={`${src}-${pageNumber}-${scale}-${pageWidth}`}
+                  className="mx-auto w-full max-w-[8.5in] rounded-md border border-border/80 bg-white p-3 shadow-sm"
+                >
+                  <Page
+                    pageNumber={pageNumber}
+                    width={pageWidth}
+                    scale={scale}
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
+                    loading={
+                      <p className="py-12 text-center text-sm text-muted-foreground">
+                        Rendering page...
+                      </p>
+                    }
+                    className="mx-auto"
+                    canvasBackground="white"
+                  />
+                </div>
+              ))}
+            </div>
           </Document>
         )}
       </div>

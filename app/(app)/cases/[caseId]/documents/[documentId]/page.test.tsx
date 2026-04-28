@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DocumentStatus } from "@/generated/prisma/client";
@@ -45,16 +46,51 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/components/cases/DocumentPdfViewer", () => ({
-  DocumentPdfViewer: ({
-    src,
-    title,
+vi.mock("react-pdf", () => ({
+  pdfjs: {
+    GlobalWorkerOptions: {
+      workerSrc: "",
+    },
+  },
+  Document: ({
+    file,
+    loading,
+    children,
   }: {
-    src: string;
-    title: string;
+    file: string;
+    loading?: ReactNode;
+    children?: ReactNode;
   }) => (
-    <div data-testid="document-pdf-viewer" data-src={src} data-title={title}>
-      PDF viewer for {title}
+    <div data-testid="react-pdf-document" data-file={file}>
+      {children}
+      {loading}
+    </div>
+  ),
+  Page: ({
+    pageNumber,
+    width,
+    scale,
+    className,
+    renderAnnotationLayer,
+    renderTextLayer,
+  }: {
+    pageNumber: number;
+    width?: number;
+    scale?: number;
+    className?: string;
+    renderAnnotationLayer?: boolean;
+    renderTextLayer?: boolean;
+  }) => (
+    <div
+      data-testid="react-pdf-page"
+      data-page-number={pageNumber}
+      data-width={width}
+      data-scale={scale}
+      data-render-annotation-layer={renderAnnotationLayer}
+      data-render-text-layer={renderTextLayer}
+      className={className}
+    >
+      Page {pageNumber}
     </div>
   ),
 }));
@@ -101,10 +137,14 @@ describe("document viewer page", () => {
     expect(html).toContain("Copies Downloaded");
     expect(html).toContain(">7<");
     expect(html).toContain("/api/documents/doc-1/download");
-    expect(html).toContain("PDF viewer for Pleading.pdf");
-    expect(html).toContain("/api/documents/doc-1/viewer");
+    expect(html).toContain('data-testid="react-pdf-document"');
+    expect(html).toContain('data-file="/api/documents/doc-1/viewer"');
+    expect(html).toContain("Loading viewer copy...");
+    expect(html).toContain("Read-only viewer for Pleading.pdf");
     expect(html).not.toContain("Back to case");
     expect(html).not.toContain("iframe");
+    expect(html).not.toContain("Previous page");
+    expect(html).not.toContain("Next page");
   });
 
   it("renders a failed document without iframe or download action", async () => {
@@ -242,5 +282,51 @@ describe("document viewer page", () => {
     expect(html).not.toContain("/api/documents/doc-5/download");
     expect(html).not.toContain("/api/documents/doc-5/viewer");
     expect(html).not.toContain("iframe");
+  });
+
+  it("renders the viewer as a continuous paper-like stack when the pdf is loaded", async () => {
+    vi.resetModules();
+    vi.doMock("react", async () => {
+      const actual = await vi.importActual<typeof import("react")>("react");
+      const queuedStates = [
+        [960, vi.fn()],
+        [3, vi.fn()],
+        [1, vi.fn()],
+        [null, vi.fn()],
+      ] as const;
+      let stateIndex = 0;
+
+      return {
+        ...actual,
+        useState: ((initialState: unknown) => {
+          const nextState = queuedStates[stateIndex];
+          if (nextState) {
+            stateIndex += 1;
+            return nextState;
+          }
+
+          return actual.useState(initialState);
+        }) as typeof actual.useState,
+      };
+    });
+
+    const { DocumentPdfViewer } = await import(
+      "@/components/cases/DocumentPdfViewer"
+    );
+    const html = renderToStaticMarkup(
+      <DocumentPdfViewer
+        src="/api/documents/doc-1/viewer"
+        title="Pleading.pdf"
+      />
+    );
+
+    expect(html).toContain("3 pages");
+    expect(html).not.toContain("Previous page");
+    expect(html).not.toContain("Next page");
+    expect(html).toContain('data-page-number="1"');
+    expect(html).toContain('data-page-number="2"');
+    expect(html).toContain('data-page-number="3"');
+    expect(html).toContain('data-width="816"');
+    expect(html).toContain("max-w-[8.5in]");
   });
 });
