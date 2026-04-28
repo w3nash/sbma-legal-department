@@ -132,6 +132,7 @@ model Document {
   caseId            String
   case              Case           @relation(fields: [caseId], references: [id])
   controlNumber     String         @unique
+  downloadCount     Int            @default(0)
   status            DocumentStatus @default(processing)
   originalFilename  String
   storedSourceKey   String?
