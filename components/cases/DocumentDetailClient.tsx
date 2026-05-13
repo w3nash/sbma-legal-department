@@ -183,7 +183,7 @@ export function DocumentDetailClient({
         </CardHeader>
         <CardContent className="flex min-h-[24rem] flex-1">
           {data.viewerAvailable ? (
-            <div className="mx-auto flex w-full max-w-[8.5in] overflow-hidden rounded-xl border bg-muted/10">
+            <div className="mx-auto flex w-full overflow-hidden border bg-muted/10">
               <iframe
                 title={`Read-only viewer for ${data.originalFilename}`}
                 src={`/api/documents/${data.id}/viewer#toolbar=0&navpanes=0&scrollbar=1`}

@@ -1,6 +1,10 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: app
+      secrets:
+        - app_env
     ports:
       - "3000:3000"
     environment:
@@ -15,7 +19,6 @@ services:
       - S3_FORCE_PATH_STYLE=true
       - S3_AUTO_CREATE_BUCKET=${S3_AUTO_CREATE_BUCKET:-true}
       - REDIS_URL=redis://cache:6379
-      - SOFFICE_PATH=soffice
       - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
       - NODE_ENV=production
     depends_on:
@@ -26,7 +29,11 @@ services:
       - /tmp:/tmp
 
   worker:
-    build: .
+    build:
+      context: .
+      target: worker
+      secrets:
+        - app_env
     command: npm run worker:documents
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-sbma}:${POSTGRES_PASSWORD:-sbma}@db:5432/${POSTGRES_DB:-sbmalegal}
@@ -81,3 +88,7 @@ services:
 volumes:
   pgdata:
   miniodata:
+
+secrets:
+  app_env:
+    file: .env
