@@ -15,6 +15,9 @@ import {
 } from "@/lib/document-copy-client";
 import { casesQueryKeys } from "@/lib/query-keys";
 
+const viewerIconButtonClassName =
+  "text-current hover:bg-white/10 hover:text-current";
+
 export function DocumentCopyIconButtons({
   caseId,
   documentId,
@@ -60,31 +63,34 @@ export function DocumentCopyIconButtons({
     <div className="flex items-center gap-2">
       <Button
         type="button"
-        variant="secondary"
-        size="icon-lg"
+        variant="ghost"
+        size="icon"
+        className={viewerIconButtonClassName}
         onClick={() => handleAction("print")}
         disabled={pendingIntent !== null}
         aria-label="Print document"
         title="Print document"
       >
         {pendingIntent === "print" ? (
-          <RiLoader4Line className="size-6 animate-spin" />
+          <RiLoader4Line className="size-5 animate-spin" />
         ) : (
-          <RiPrinterLine className="size-6" />
+          <RiPrinterLine className="size-5" />
         )}
       </Button>
       <Button
         type="button"
-        size="icon-lg"
+        variant="ghost"
+        size="icon"
+        className={viewerIconButtonClassName}
         onClick={() => handleAction("download")}
         disabled={pendingIntent !== null}
         aria-label="Download document"
         title="Download document"
       >
         {pendingIntent === "download" ? (
-          <RiLoader4Line className="size-6 animate-spin" />
+          <RiLoader4Line className="size-5 animate-spin" />
         ) : (
-          <RiDownload2Line className="size-6" />
+          <RiDownload2Line className="size-5" />
         )}
       </Button>
     </div>

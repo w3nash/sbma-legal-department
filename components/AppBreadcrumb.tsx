@@ -91,15 +91,17 @@ export function AppBreadcrumb() {
 
 function BreadcrumbSegments({ segments }: { segments: BreadcrumbSegment[] }) {
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb className="min-w-0 flex-1 overflow-hidden">
+      <BreadcrumbList className="min-w-0 flex-nowrap overflow-hidden">
         {segments.map((segment, index) => {
           const isLast = index === segments.length - 1;
           return (
             <React.Fragment key={segment.label}>
-              <BreadcrumbItem>
+              <BreadcrumbItem className={isLast ? "min-w-0" : undefined}>
                 {isLast ? (
-                  <BreadcrumbPage>{segment.label}</BreadcrumbPage>
+                  <BreadcrumbPage className="block truncate">
+                    {segment.label}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink render={<Link href={segment.href ?? "#"} />}>
                     {segment.label}

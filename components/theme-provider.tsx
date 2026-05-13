@@ -3,10 +3,29 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
+function subscribeToMount(onStoreChange: () => void) {
+  onStoreChange();
+  return () => {};
+}
+
+function useMounted() {
+  return React.useSyncExternalStore(
+    subscribeToMount,
+    () => true,
+    () => false
+  );
+}
+
 function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
+  const mounted = useMounted();
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return (
     <NextThemesProvider
       attribute="class"

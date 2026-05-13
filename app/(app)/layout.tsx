@@ -19,12 +19,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppBreadcrumbProvider>
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset>
-            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <SidebarInset className="min-w-0 overflow-hidden">
+            <header className="sticky top-0 z-10 flex h-14 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b bg-background px-4">
               <SidebarTrigger className="-ml-1" />
-              <AppBreadcrumb />
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <AppBreadcrumb />
+              </div>
             </header>
-            <main className="flex flex-1 flex-col overflow-hidden p-6">
+            <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-6">
               {children}
             </main>
           </SidebarInset>

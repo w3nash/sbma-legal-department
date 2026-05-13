@@ -54,14 +54,26 @@ describe("AppBreadcrumb", () => {
         initialSegments={[
           { label: "Cases", href: "/cases" },
           { label: "Documents", href: "/cases/case-1" },
-          { label: "Pleading.pdf" },
+          { label: "1765409235008-TRIAL BRIEF.pdf" },
         ]}
       >
         <AppBreadcrumb />
       </AppBreadcrumbProvider>
     );
 
-    expect(html).toContain("Pleading.pdf");
+    expect(html).toContain("1765409235008-TRIAL BRIEF.pdf");
     expect(html).not.toContain(">Document<");
+    expect(html).toContain(
+      'data-slot="breadcrumb" class="min-w-0 flex-1 overflow-hidden"'
+    );
+    expect(html).toContain(
+      'data-slot="breadcrumb-list" class="flex items-center gap-1.5 text-sm wrap-break-word text-muted-foreground min-w-0 flex-nowrap overflow-hidden"'
+    );
+    expect(html).toContain(
+      'data-slot="breadcrumb-item" class="inline-flex items-center gap-1 min-w-0"'
+    );
+    expect(html).toContain(
+      'data-slot="breadcrumb-page" role="link" aria-disabled="true" aria-current="page" class="font-normal text-foreground block truncate"'
+    );
   });
 });
