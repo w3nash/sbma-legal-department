@@ -186,7 +186,7 @@ export function DocumentDetailClient({
             <div className="mx-auto flex w-full overflow-hidden border bg-muted/10">
               <iframe
                 title={`Read-only viewer for ${data.originalFilename}`}
-                src={`/api/documents/${data.id}/viewer#toolbar=0&navpanes=0&scrollbar=1`}
+                src={`/api/documents/${data.id}/viewer`}
                 className="w-full bg-white"
                 style={{ aspectRatio: "8.5 / 14" }}
               />
