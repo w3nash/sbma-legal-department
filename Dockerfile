@@ -17,11 +17,7 @@ RUN npm ci
 FROM deps AS builder
 
 COPY . .
-RUN --mount=type=secret,id=app_env,required=true \
-    set -a; \
-    . /run/secrets/app_env; \
-    set +a; \
-    NODE_ENV=production npm run build
+RUN NODE_ENV=production npm run build
 
 FROM base AS prod-deps
 

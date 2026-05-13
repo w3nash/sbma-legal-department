@@ -3,8 +3,6 @@ services:
     build:
       context: .
       target: app
-      secrets:
-        - app_env
     env_file:
       - .env
     ports:
@@ -34,8 +32,6 @@ services:
     build:
       context: .
       target: worker
-      secrets:
-        - app_env
     env_file:
       - .env
     command: npm run worker:documents
@@ -92,7 +88,3 @@ services:
 volumes:
   pgdata:
   miniodata:
-
-secrets:
-  app_env:
-    file: .env
