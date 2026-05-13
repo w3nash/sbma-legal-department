@@ -10,7 +10,7 @@ const decryptKeyMock = vi.hoisted(() => vi.fn());
 const decryptFileMock = vi.hoisted(() => vi.fn());
 const encryptFileMock = vi.hoisted(() => vi.fn());
 const convertToPDFMock = vi.hoisted(() => vi.fn());
-const addWatermarkMock = vi.hoisted(() => vi.fn());
+const addViewerWatermarkMock = vi.hoisted(() => vi.fn());
 const logAuditMock = vi.hoisted(() => vi.fn());
 const mkdtempMock = vi.hoisted(() => vi.fn());
 const writeFileMock = vi.hoisted(() => vi.fn());
@@ -50,7 +50,7 @@ vi.mock("@/lib/convert", () => ({
 }));
 
 vi.mock("@/lib/watermark", () => ({
-  addWatermark: addWatermarkMock,
+  addViewerWatermark: addViewerWatermarkMock,
 }));
 
 vi.mock("@/lib/audit", () => ({
@@ -73,7 +73,7 @@ describe("processDocument", () => {
     decryptKeyMock.mockReturnValue(Buffer.from("file-key"));
     decryptFileMock.mockReturnValue(Buffer.from("source-buffer"));
     convertToPDFMock.mockResolvedValue(Buffer.from("%PDF-original"));
-    addWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
+    addViewerWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
     encryptFileMock
       .mockReturnValueOnce(Buffer.from("encrypted-original"))
       .mockReturnValueOnce(Buffer.from("encrypted-viewer"));
@@ -82,9 +82,9 @@ describe("processDocument", () => {
     s3SendMock
       .mockResolvedValueOnce({
         Body: {
-          transformToByteArray: vi.fn().mockResolvedValue(
-            Uint8Array.from([1, 2, 3])
-          ),
+          transformToByteArray: vi
+            .fn()
+            .mockResolvedValue(Uint8Array.from([1, 2, 3])),
         },
       })
       .mockResolvedValue({});
@@ -115,6 +115,10 @@ describe("processDocument", () => {
     const { processDocument } = await import("@/lib/document-processing");
     await processDocument("doc-1");
 
+    expect(addViewerWatermarkMock).toHaveBeenCalledWith(
+      Buffer.from("%PDF-original"),
+      "Control Number: control-1"
+    );
     expect(documentUpdateMock).toHaveBeenCalledWith({
       where: { id: "doc-1" },
       data: expect.objectContaining({

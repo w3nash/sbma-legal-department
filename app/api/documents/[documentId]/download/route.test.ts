@@ -164,8 +164,7 @@ describe("GET /api/documents/[documentId]/download", () => {
         "Copy Number: 7",
         "User: Taylor Test",
         "Email: taylor@example.com",
-        "IP: 203.0.113.1",
-        "Timestamp: 2026-04-28T08:09:10.000Z",
+        "Timestamp: 2026-04-28T16:09:10+08:00",
       ]
     );
     expect(logAuditMock).toHaveBeenCalledWith({
@@ -178,7 +177,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       metadata: {
         controlNumber: "CTRL-123",
         copyNumber: 7,
-        downloadedAt: "2026-04-28T08:09:10.000Z",
+        downloadedAt: "2026-04-28T16:09:10+08:00",
       },
     });
 
@@ -350,9 +349,47 @@ describe("GET /api/documents/[documentId]/download", () => {
         "Copy Number: 7",
         "User: ????",
         "Email: te?st@example.com",
-        "IP: 203.0.113.1",
-        "Timestamp: 2026-04-28T08:09:10.000Z",
+        "Timestamp: 2026-04-28T16:09:10+08:00",
       ]
+    );
+  });
+
+  it("supports print intent while using the same counted watermark flow", async () => {
+    const { GET } = await import("./route");
+
+    const response = await GET(
+      new Request(
+        "https://example.com/api/documents/doc-1/download?intent=print",
+        {
+          headers: {
+            "user-agent": "Vitest",
+            "x-forwarded-for": "203.0.113.1",
+          },
+        }
+      ),
+      { params: Promise.resolve({ documentId: "doc-1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(documentUpdateMock).toHaveBeenCalledWith({
+      where: { id: "doc-1" },
+      data: {
+        downloadCount: {
+          increment: 1,
+        },
+      },
+      select: {
+        downloadCount: true,
+      },
+    });
+    expect(logAuditMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "PRINT",
+        metadata: expect.objectContaining({
+          controlNumber: "CTRL-123",
+          copyNumber: 7,
+        }),
+      })
     );
   });
 });

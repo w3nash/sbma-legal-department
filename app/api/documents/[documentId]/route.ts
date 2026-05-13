@@ -1,17 +1,15 @@
-import { notFound, redirect } from "next/navigation";
-import { DocumentDetailClient } from "@/components/cases/DocumentDetailClient";
+import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-guards";
 import { MembershipRole, UserRole } from "@/lib/constants";
 import { serializeDocumentDetail } from "@/lib/document-detail";
 import { canDownloadDocument, canViewCase } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
-export default async function DocumentViewerPage({
-  params,
-}: {
-  params: Promise<{ caseId: string; documentId: string }>;
-}) {
-  const { caseId, documentId } = await params;
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ documentId: string }> }
+) {
+  const { documentId } = await params;
   const session = await requireAuth();
   const user = session.user;
 
@@ -42,8 +40,11 @@ export default async function DocumentViewerPage({
     },
   });
 
-  if (!document || document.caseId !== caseId) {
-    notFound();
+  if (!document) {
+    return NextResponse.json(
+      { message: "Document not found" },
+      { status: 404 }
+    );
   }
 
   const membership =
@@ -54,19 +55,10 @@ export default async function DocumentViewerPage({
   const userRole = { role: user.role as UserRole };
 
   if (!canViewCase(userRole, memberRole)) {
-    redirect("/cases");
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
 
-  const initialData = serializeDocumentDetail(
-    document,
-    canDownloadDocument(userRole, memberRole)
-  );
-
-  return (
-    <DocumentDetailClient
-      caseId={caseId}
-      documentId={documentId}
-      initialData={initialData}
-    />
+  return NextResponse.json(
+    serializeDocumentDetail(document, canDownloadDocument(userRole, memberRole))
   );
 }

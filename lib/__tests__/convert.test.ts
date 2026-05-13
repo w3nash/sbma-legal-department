@@ -122,7 +122,10 @@ describe("convert", () => {
   });
 
   it("falls back to soffice when SOFFICE_PATH is missing", async () => {
-    vi.stubEnv("SOFFICE_PATH", "/Applications/LibreOffice.app/Contents/MacOS/soffice");
+    vi.stubEnv(
+      "SOFFICE_PATH",
+      "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+    );
     const inputDir = await fs.mkdtemp(path.join(os.tmpdir(), "sbma-test-"));
     const inputPath = path.join(inputDir, "pleading.docx");
     await fs.writeFile(inputPath, "word contents");
@@ -135,8 +138,12 @@ describe("convert", () => {
         _options: { timeout: number },
         callback: (error: Error | null, stdout: string, stderr: string) => void
       ) => {
-        if (command === "/Applications/LibreOffice.app/Contents/MacOS/soffice") {
-          const error = Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" });
+        if (
+          command === "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+        ) {
+          const error = Object.assign(new Error("spawn ENOENT"), {
+            code: "ENOENT",
+          });
           callback(error, "", "");
           return;
         }

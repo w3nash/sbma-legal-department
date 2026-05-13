@@ -24,3 +24,10 @@ export async function addWatermark(
 
   return Buffer.from(await pdf.save());
 }
+
+export async function addViewerWatermark(
+  pdfBuffer: Buffer,
+  text: string
+): Promise<Buffer> {
+  return addWatermark(pdfBuffer, text);
+}

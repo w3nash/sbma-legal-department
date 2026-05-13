@@ -44,7 +44,9 @@ export function UploadDocumentsSheet({ caseId }: { caseId: string }) {
           />
         </div>
         <SheetFooter className="grid grid-cols-2">
-          <SheetClose render={<Button variant="outline" disabled={uploading} />}>
+          <SheetClose
+            render={<Button variant="outline" disabled={uploading} />}
+          >
             Cancel
           </SheetClose>
           <Button type="submit" form={FORM_ID} disabled={uploading}>

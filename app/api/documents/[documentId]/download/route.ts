@@ -1,5 +1,5 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { DocumentStatus } from "@/generated/prisma/client";
+import { AuditAction, DocumentStatus } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { logAudit } from "@/lib/audit";
 import { requireAuth } from "@/lib/auth-guards";
@@ -13,6 +13,8 @@ import { addWatermark } from "@/lib/watermark";
 
 const DOWNLOAD_LIMIT = 30;
 const DOWNLOAD_WINDOW_SECONDS = 60 * 60;
+const MANILA_TIME_ZONE = "Asia/Manila";
+const MANILA_OFFSET = "+08:00";
 
 function extractClientIp(xForwardedFor: string | null): string | undefined {
   if (!xForwardedFor) {
@@ -30,6 +32,11 @@ function sanitizeAttachmentFilename(filename: string): string {
   return sanitized || "document.pdf";
 }
 
+function getCopyIntent(request: Request): "download" | "print" {
+  const intent = new URL(request.url).searchParams.get("intent");
+  return intent === "print" ? "print" : "download";
+}
+
 function toPdfTextSafe(
   value: string | null | undefined,
   fallback: string
@@ -45,6 +52,27 @@ function toPdfTextSafe(
     .trim();
 
   return sanitized || fallback;
+}
+
+function formatManilaTimestamp(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: MANILA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}${MANILA_OFFSET}`;
 }
 
 async function bodyToBuffer(body: unknown): Promise<Buffer> {
@@ -86,6 +114,7 @@ export async function GET(
   const { documentId } = await params;
   const session = await requireAuth();
   const user = session.user;
+  const intent = getCopyIntent(request);
 
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
@@ -180,19 +209,18 @@ export async function GET(
       },
     });
     const ipAddress = extractClientIp(request.headers.get("x-forwarded-for"));
-    const downloadedAt = new Date().toISOString();
+    const generatedAt = formatManilaTimestamp(new Date());
     const watermark = [
       `Control Number: ${toPdfTextSafe(doc.controlNumber, "unknown")}`,
       `Copy Number: ${downloadCount}`,
       `User: ${toPdfTextSafe(user.name, "Unknown User")}`,
       `Email: ${toPdfTextSafe(user.email, "unknown")}`,
-      `IP: ${toPdfTextSafe(ipAddress, "unknown")}`,
-      `Timestamp: ${downloadedAt}`,
+      `Timestamp: ${generatedAt}`,
     ];
     const watermarkedPdf = await addWatermark(originalPdf, watermark);
 
     await logAudit({
-      action: "DOWNLOAD",
+      action: intent === "print" ? AuditAction.PRINT : AuditAction.DOWNLOAD,
       userId: user.id,
       documentId: doc.id,
       caseId: doc.caseId,
@@ -201,7 +229,9 @@ export async function GET(
       metadata: {
         controlNumber: doc.controlNumber,
         copyNumber: downloadCount,
-        downloadedAt,
+        ...(intent === "print"
+          ? { printedAt: generatedAt }
+          : { downloadedAt: generatedAt }),
       },
     });
 
@@ -209,7 +239,7 @@ export async function GET(
       status: 200,
       headers: {
         "Cache-Control": "no-store",
-        "Content-Disposition": `attachment; filename="${sanitizeAttachmentFilename(doc.originalFilename)}"`,
+        "Content-Disposition": `${intent === "print" ? "inline" : "attachment"}; filename="${sanitizeAttachmentFilename(doc.originalFilename)}"`,
         "Content-Type": "application/pdf",
       },
     });

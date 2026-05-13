@@ -7,6 +7,8 @@ export const casesQueryKeys = {
   list: () => ["cases", "list"] as const,
   summary: (caseId: string) => ["cases", caseId, "summary"] as const,
   documents: (caseId: string) => ["cases", caseId, "documents"] as const,
+  document: (caseId: string, documentId: string) =>
+    ["cases", caseId, "documents", documentId] as const,
   members: (caseId: string) => ["cases", caseId, "members"] as const,
   availableUsers: (caseId: string) =>
     ["cases", caseId, "available-users"] as const,

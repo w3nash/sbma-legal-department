@@ -1,7 +1,4 @@
-import {
-  CreateBucketCommand,
-  HeadBucketCommand,
-} from "@aws-sdk/client-s3";
+import { CreateBucketCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const envMock = vi.hoisted(() => ({

@@ -11,6 +11,7 @@ import {
 } from "@/app/(app)/cases/_actions";
 import { uploadDocuments } from "@/app/(app)/cases/[caseId]/upload/_actions";
 import type { CaseDocumentRow, CaseSummary } from "@/lib/case-data";
+import type { DocumentDetailData } from "@/lib/document-detail";
 import { casesQueryKeys } from "@/lib/query-keys";
 
 export type CaseRow = {
@@ -89,6 +90,24 @@ export function useCaseDocumentsQuery(
       query.state.data?.some((document) => document.status === "processing")
         ? 2000
         : 5000,
+  });
+}
+
+export function useCaseDocumentDetailQuery(
+  caseId: string,
+  documentId: string,
+  initialData?: DocumentDetailData
+) {
+  return useQuery({
+    queryKey: casesQueryKeys.document(caseId, documentId),
+    queryFn: async () => {
+      const res = await fetch(`/api/documents/${documentId}`);
+      if (!res.ok) throw new Error("Failed to fetch document detail");
+      return res.json() as Promise<DocumentDetailData>;
+    },
+    initialData,
+    refetchInterval: (query) =>
+      query.state.data?.status === "processing" ? 2000 : 5000,
   });
 }
 

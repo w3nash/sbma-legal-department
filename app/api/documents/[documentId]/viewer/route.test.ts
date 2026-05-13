@@ -9,6 +9,8 @@ const redisSetexMock = vi.hoisted(() => vi.fn());
 const s3SendMock = vi.hoisted(() => vi.fn());
 const decryptKeyMock = vi.hoisted(() => vi.fn());
 const decryptFileMock = vi.hoisted(() => vi.fn());
+const encryptFileMock = vi.hoisted(() => vi.fn());
+const addViewerWatermarkMock = vi.hoisted(() => vi.fn());
 const logAuditMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth-guards", () => ({
@@ -40,6 +42,11 @@ vi.mock("@/lib/s3", () => ({
 vi.mock("@/lib/crypto", () => ({
   decryptKey: decryptKeyMock,
   decryptFile: decryptFileMock,
+  encryptFile: encryptFileMock,
+}));
+
+vi.mock("@/lib/watermark", () => ({
+  addViewerWatermark: addViewerWatermarkMock,
 }));
 
 vi.mock("@/lib/audit", () => ({
@@ -61,6 +68,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -72,6 +80,7 @@ describe("document viewer route", () => {
     );
     decryptKeyMock.mockReturnValue("file-key");
     decryptFileMock.mockReturnValue(Buffer.from("%PDF-viewer"));
+    addViewerWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
     logAuditMock.mockResolvedValue(true);
 
     const { GET } = await import("./route");
@@ -96,9 +105,10 @@ describe("document viewer route", () => {
     expect(Buffer.from(await response.arrayBuffer())).toEqual(
       Buffer.from("%PDF-viewer")
     );
-    expect(redisGetMock).toHaveBeenCalledWith("viewer:control-1");
+    expect(redisGetMock).toHaveBeenCalledWith("viewer:v2:control-1");
     expect(redisSetexMock).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
+    expect(addViewerWatermarkMock).not.toHaveBeenCalled();
     expect(logAuditMock).toHaveBeenCalledWith({
       action: "VIEW",
       userId: "user-1",
@@ -120,6 +130,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -135,7 +146,9 @@ describe("document viewer route", () => {
       },
     });
     decryptKeyMock.mockReturnValue("file-key");
-    decryptFileMock.mockReturnValue(Buffer.from("%PDF-viewer"));
+    decryptFileMock.mockReturnValue(Buffer.from("%PDF-original"));
+    addViewerWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
+    encryptFileMock.mockReturnValue(Buffer.from("encrypted-viewer"));
     logAuditMock.mockResolvedValue(true);
 
     const { GET } = await import("./route");
@@ -153,8 +166,12 @@ describe("document viewer route", () => {
 
     expect(response.status).toBe(200);
     expect(s3SendMock).toHaveBeenCalledOnce();
+    expect(addViewerWatermarkMock).toHaveBeenCalledWith(
+      Buffer.from("%PDF-original"),
+      "Control Number: control-1"
+    );
     expect(redisSetexMock).toHaveBeenCalledWith(
-      "viewer:control-1",
+      "viewer:v2:control-1",
       3600,
       Buffer.from("encrypted-viewer").toString("base64")
     );
@@ -176,6 +193,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -207,6 +225,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -220,7 +239,7 @@ describe("document viewer route", () => {
       Body: {
         transformToByteArray: vi
           .fn()
-          .mockResolvedValue(Uint8Array.from(Buffer.from("fresh-encrypted"))),
+          .mockResolvedValue(Uint8Array.from([4, 5, 6])),
       },
     });
     decryptKeyMock.mockReturnValue("file-key");
@@ -228,7 +247,9 @@ describe("document viewer route", () => {
       .mockImplementationOnce(() => {
         throw new Error("bad ciphertext");
       })
-      .mockReturnValueOnce(Buffer.from("%PDF-viewer"));
+      .mockReturnValueOnce(Buffer.from("%PDF-original"));
+    addViewerWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
+    encryptFileMock.mockReturnValue(Buffer.from("fresh-encrypted-viewer"));
     logAuditMock.mockResolvedValue(true);
 
     const { GET } = await import("./route");
@@ -246,10 +267,14 @@ describe("document viewer route", () => {
 
     expect(response.status).toBe(200);
     expect(s3SendMock).toHaveBeenCalledOnce();
+    expect(addViewerWatermarkMock).toHaveBeenCalledWith(
+      Buffer.from("%PDF-original"),
+      "Control Number: control-1"
+    );
     expect(redisSetexMock).toHaveBeenCalledWith(
-      "viewer:control-1",
+      "viewer:v2:control-1",
       3600,
-      Buffer.from("fresh-encrypted").toString("base64")
+      Buffer.from("fresh-encrypted-viewer").toString("base64")
     );
     expect(logAuditMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -302,6 +327,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: null,
       storedViewerKey: null,
       encryptionKey: "wrapped-key",
       case: {
@@ -335,6 +361,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -371,6 +398,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: "Pleading.pdf",
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
@@ -387,7 +415,11 @@ describe("document viewer route", () => {
     });
     redisSetexMock.mockRejectedValue(new Error("redis write failed"));
     decryptKeyMock.mockReturnValue("file-key");
-    decryptFileMock.mockReturnValue(Buffer.from("%PDF-viewer"));
+    decryptFileMock.mockReturnValue(Buffer.from("%PDF-original"));
+    addViewerWatermarkMock.mockResolvedValue(Buffer.from("%PDF-viewer"));
+    encryptFileMock.mockReturnValue(
+      Buffer.from("encrypted-regenerated-viewer")
+    );
     logAuditMock.mockResolvedValue(true);
 
     const { GET } = await import("./route");
@@ -418,6 +450,7 @@ describe("document viewer route", () => {
       controlNumber: "control-1",
       status: DocumentStatus.ready,
       originalFilename: 'unsafe"file\r\n.pdf',
+      storedOriginalKey: "documents/case-1/control-1/original.enc",
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {

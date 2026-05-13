@@ -38,8 +38,7 @@ async function ensureStorageBucketOnce(): Promise<void> {
         ? {}
         : {
             CreateBucketConfiguration: {
-              LocationConstraint:
-                env.S3_REGION as BucketLocationConstraint,
+              LocationConstraint: env.S3_REGION as BucketLocationConstraint,
             },
           }),
     })

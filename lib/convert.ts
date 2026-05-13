@@ -28,10 +28,7 @@ function getSofficePath(): string {
   return env.SOFFICE_PATH ?? "soffice";
 }
 
-async function runSoffice(
-  command: string,
-  args: string[]
-): Promise<void> {
+async function runSoffice(command: string, args: string[]): Promise<void> {
   await execFileAsync(command, args, {
     timeout: SOFFICE_TIMEOUT_MS,
   });

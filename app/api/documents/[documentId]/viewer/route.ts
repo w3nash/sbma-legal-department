@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { AuditAction, DocumentStatus } from "@/generated/prisma/client";
 import { logAudit } from "@/lib/audit";
 import { requireAuth } from "@/lib/auth-guards";
-import { decryptFile, decryptKey } from "@/lib/crypto";
+import { decryptFile, decryptKey, encryptFile } from "@/lib/crypto";
 import { MembershipRole, UserRole } from "@/lib/constants";
 import { canViewCase } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
+import { addViewerWatermark } from "@/lib/watermark";
 
 const VIEWER_CACHE_TTL_SECONDS = 60 * 60;
 
@@ -73,13 +74,11 @@ async function safeSetCachedViewer(
   }
 }
 
-async function loadEncryptedViewerFromS3(
-  storedViewerKey: string
-): Promise<Buffer> {
+async function loadEncryptedPdfFromS3(storedPdfKey: string): Promise<Buffer> {
   const viewerObject = await s3Client.send(
     new GetObjectCommand({
       Bucket: BUCKET_NAME,
-      Key: storedViewerKey,
+      Key: storedPdfKey,
     })
   );
 
@@ -102,7 +101,7 @@ export async function GET(
       controlNumber: true,
       status: true,
       originalFilename: true,
-      storedViewerKey: true,
+      storedOriginalKey: true,
       encryptionKey: true,
       case: {
         select: {
@@ -137,7 +136,7 @@ export async function GET(
 
   if (
     document.status !== DocumentStatus.ready ||
-    document.storedViewerKey === null
+    document.storedOriginalKey === null
   ) {
     return NextResponse.json(
       { message: "Document viewer is not ready" },
@@ -145,49 +144,49 @@ export async function GET(
     );
   }
 
-  const viewerCacheKey = `viewer:${document.controlNumber}`;
+  const viewerCacheKey = `viewer:v2:${document.controlNumber}`;
   const cachedViewer = await safeGetCachedViewer(viewerCacheKey);
   let source: "redis" | "s3" = cachedViewer ? "redis" : "s3";
   let pdfBuffer: Buffer;
 
   try {
-    let encryptedViewer: Buffer;
-
     if (cachedViewer) {
-      encryptedViewer = Buffer.from(cachedViewer, "base64");
+      const fileKey = decryptKey(document.encryptionKey);
+      pdfBuffer = decryptFile(Buffer.from(cachedViewer, "base64"), fileKey);
     } else {
-      encryptedViewer = await loadEncryptedViewerFromS3(
-        document.storedViewerKey
-      );
-      await safeSetCachedViewer(viewerCacheKey, encryptedViewer);
-    }
-
-    const fileKey = decryptKey(document.encryptionKey);
-
-    try {
-      pdfBuffer = decryptFile(encryptedViewer, fileKey);
-    } catch (error) {
-      if (source !== "redis") {
-        throw error;
-      }
-
-      const refreshedViewer = await loadEncryptedViewerFromS3(
-        document.storedViewerKey
-      );
-      await safeSetCachedViewer(viewerCacheKey, refreshedViewer);
-      source = "s3";
-      pdfBuffer = decryptFile(refreshedViewer, fileKey);
+      throw new Error("viewer cache miss");
     }
   } catch (error) {
-    console.error("Viewer fetch failed", {
-      documentId: document.id,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    try {
+      const encryptedOriginal = await loadEncryptedPdfFromS3(
+        document.storedOriginalKey
+      );
+      const fileKey = decryptKey(document.encryptionKey);
+      const originalPdf = decryptFile(encryptedOriginal, fileKey);
+      pdfBuffer = await addViewerWatermark(
+        originalPdf,
+        `Control Number: ${document.controlNumber}`
+      );
+      await safeSetCachedViewer(
+        viewerCacheKey,
+        encryptFile(pdfBuffer, fileKey)
+      );
+      source = "s3";
+    } catch (refreshError) {
+      console.error("Viewer fetch failed", {
+        documentId: document.id,
+        error:
+          refreshError instanceof Error
+            ? refreshError.message
+            : String(refreshError),
+        cachedError: error instanceof Error ? error.message : String(error),
+      });
 
-    return NextResponse.json(
-      { message: "Viewer file is unavailable" },
-      { status: 502 }
-    );
+      return NextResponse.json(
+        { message: "Viewer file is unavailable" },
+        { status: 502 }
+      );
+    }
   }
 
   await logAudit({

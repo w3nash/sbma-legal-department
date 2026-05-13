@@ -86,7 +86,9 @@ export default async function CaseDetailLayout({
           <p className="mt-0.5 line-clamp-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
             {c.description ?? "—"}
           </p>
-          <p className="text-xs text-muted-foreground/50">Created {createdAt}</p>
+          <p className="text-xs text-muted-foreground/50">
+            Created {createdAt}
+          </p>
         </div>
 
         {isAdmin && (
@@ -107,9 +109,7 @@ export default async function CaseDetailLayout({
   return (
     <CaseDetailShell
       caseHeader={caseHeader}
-      caseTabs={
-        <CaseTabNav caseId={caseId} initialSummary={initialSummary} />
-      }
+      caseTabs={<CaseTabNav caseId={caseId} initialSummary={initialSummary} />}
       modal={modal}
     >
       {children}

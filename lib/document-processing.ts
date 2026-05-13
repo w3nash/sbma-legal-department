@@ -18,7 +18,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
-import { addWatermark } from "@/lib/watermark";
+import { addViewerWatermark } from "@/lib/watermark";
 
 const QUEUE_KEY = "document-processing:queue";
 const PROCESSING_KEY = "document-processing:processing";
@@ -146,7 +146,7 @@ export async function processDocument(documentId: string) {
         })
       );
 
-      const viewerPdf = await addWatermark(
+      const viewerPdf = await addViewerWatermark(
         pdfBuffer,
         `Control Number: ${doc.controlNumber}`
       );

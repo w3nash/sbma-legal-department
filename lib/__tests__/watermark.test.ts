@@ -16,13 +16,13 @@ function extractDrawnText(pdf: PDFDocument): string[] {
         : undefined;
 
   return stream
-    ? inflateSync(Buffer.from(stream.getContents()))
+    ? (inflateSync(Buffer.from(stream.getContents()))
         .toString("utf8")
         .match(/<([0-9A-F]+)> Tj/g)
         ?.map((entry: string) => {
           const [, hex = ""] = entry.match(/<([0-9A-F]+)> Tj/) ?? [];
           return Buffer.from(hex, "hex").toString("utf8");
-        }) ?? []
+        }) ?? [])
     : [];
 }
 
@@ -32,11 +32,7 @@ describe("watermark", () => {
     pdf.addPage([600, 400]);
     const original = await pdf.save();
 
-    const lines = [
-      "Control Number: CTRL-123",
-      "Copy Number: 7",
-      "User: John",
-    ];
+    const lines = ["Control Number: CTRL-123", "Copy Number: 7", "User: John"];
     const watermarked = await addWatermark(Buffer.from(original), lines);
     const loaded = await PDFDocument.load(watermarked);
 
