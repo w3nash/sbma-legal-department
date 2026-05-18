@@ -11,7 +11,8 @@ import {
 import { DocumentCopyIconButtons } from "@/components/cases/DocumentCopyIconButtons";
 import { Button } from "@/components/ui/button";
 
-const toolbarIconButtonClassName = "text-white hover:bg-white/10 hover:text-white";
+const toolbarIconButtonClassName =
+  "text-white hover:bg-white/10 hover:text-white";
 
 type DocumentViewerToolbarProps = {
   caseId: string;

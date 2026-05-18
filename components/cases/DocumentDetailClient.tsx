@@ -71,11 +71,15 @@ export function DocumentDetailClient({
   );
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full max-w-full min-w-0 flex-1 overflow-hidden">
       <HeaderBreadcrumbOverride segments={breadcrumbSegments} />
 
       {data.viewerAvailable ? (
-        <PdfDocumentViewer caseId={caseId} documentId={documentId} data={data} />
+        <PdfDocumentViewer
+          caseId={caseId}
+          documentId={documentId}
+          data={data}
+        />
       ) : (
         <div className="flex min-h-[calc(100vh-12rem)] w-full items-center justify-center rounded-xl border border-dashed bg-muted/25 p-6 text-center">
           <div className="max-w-md space-y-3">

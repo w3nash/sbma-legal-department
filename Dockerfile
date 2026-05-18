@@ -12,7 +12,7 @@ FROM base AS deps
 
 COPY package.json package-lock.json prisma.config.ts ./
 COPY prisma ./prisma
-RUN npm ci
+RUN HUSKY=0 npm ci
 
 FROM deps AS builder
 

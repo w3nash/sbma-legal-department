@@ -36,7 +36,9 @@ function getPages(numPages: number): number[] {
 function getInitialDetailsOpen(initialDetailsOpen: boolean): boolean {
   if (typeof window === "undefined") return initialDetailsOpen;
 
-  return window.matchMedia(desktopDetailsMediaQuery).matches && initialDetailsOpen;
+  return (
+    window.matchMedia(desktopDetailsMediaQuery).matches && initialDetailsOpen
+  );
 }
 
 type PdfDocumentViewerProps = {
@@ -74,7 +76,10 @@ export function PdfDocumentViewer({
     if (!container) return;
 
     const calculatePageWidth = () => {
-      const availableWidth = Math.max(container.clientWidth - pageWidthPadding, 1);
+      const availableWidth = Math.max(
+        container.clientWidth - pageWidthPadding,
+        1
+      );
       const nextPageWidth = Math.min(maxPageWidth, availableWidth);
 
       setPageWidth((currentWidth) => {
@@ -130,7 +135,7 @@ export function PdfDocumentViewer({
   return (
     <section
       data-testid="pdf-document-viewer"
-      className="flex h-[calc(100vh-8rem)] min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden border bg-[#202124] text-white"
+      className="flex h-[calc(100vh-8rem)] min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden border bg-[#202124] text-white"
     >
       <DocumentViewerToolbar
         caseId={caseId}

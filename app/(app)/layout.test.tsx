@@ -33,7 +33,9 @@ vi.mock("@/components/AppBreadcrumb", () => ({
 }));
 
 vi.mock("@/components/QueryProvider", () => ({
-  QueryProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  QueryProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 vi.mock("@/components/ui/sonner", () => ({
@@ -56,9 +58,7 @@ describe("AppLayout", () => {
     expect(html).toContain(
       'class="sticky top-0 z-10 flex h-14 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b bg-background px-4"'
     );
-    expect(html).toContain(
-      'class="min-w-0 flex-1 overflow-hidden"'
-    );
+    expect(html).toContain('class="min-w-0 flex-1 overflow-hidden"');
     expect(html).toContain(
       'class="flex min-w-0 flex-1 flex-col overflow-hidden p-6"'
     );

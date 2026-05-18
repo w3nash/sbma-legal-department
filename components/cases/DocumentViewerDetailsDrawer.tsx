@@ -126,7 +126,7 @@ export function DocumentViewerDetailsDrawer({
   return (
     <aside
       aria-labelledby="document-details-heading"
-      className="absolute inset-y-0 right-0 z-20 h-full w-full max-w-sm shrink-0 overflow-y-auto border-l border-white/10 bg-[#181b20] text-white shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 fill-mode-both sm:w-80 md:static md:z-auto md:w-80"
+      className="absolute inset-y-0 right-0 z-20 h-full w-full max-w-sm shrink-0 animate-in overflow-y-auto border-l border-white/10 bg-[#181b20] text-white shadow-2xl duration-200 fill-mode-both fade-in slide-in-from-right-3 sm:w-80 md:static md:z-auto md:w-80"
     >
       <div className="flex items-start justify-between gap-3 border-b border-white/10 p-4">
         <div className="flex min-w-0 gap-3">
@@ -168,7 +168,10 @@ export function DocumentViewerDetailsDrawer({
 
       <dl className="space-y-2.5 p-4 text-sm">
         {fields.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+          <div
+            key={label}
+            className="rounded-xl bg-white/5 p-3 ring-1 ring-white/10"
+          >
             <div className="flex gap-3">
               <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70">
                 <Icon aria-hidden="true" className="size-4" />
@@ -177,7 +180,9 @@ export function DocumentViewerDetailsDrawer({
                 <dt className="text-xs font-medium tracking-[0.14em] text-white/50 uppercase">
                   {label}
                 </dt>
-                <dd className="wrap-break-word leading-relaxed text-white/90">{value}</dd>
+                <dd className="leading-relaxed wrap-break-word text-white/90">
+                  {value}
+                </dd>
               </div>
             </div>
           </div>

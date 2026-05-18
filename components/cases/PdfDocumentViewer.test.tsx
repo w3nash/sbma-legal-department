@@ -48,7 +48,9 @@ vi.mock("react-pdf", () => ({
     </div>
   ),
   Thumbnail: ({ pageNumber }: { pageNumber: number }) => (
-    <div data-testid={`pdf-thumbnail-${pageNumber}`}>Thumbnail {pageNumber}</div>
+    <div data-testid={`pdf-thumbnail-${pageNumber}`}>
+      Thumbnail {pageNumber}
+    </div>
   ),
 }));
 
@@ -177,7 +179,9 @@ describe("PdfDocumentViewer", () => {
     expect(html).not.toContain(
       "hidden text-white hover:bg-white/10 hover:text-white md:inline-flex"
     );
-    expect(html).toContain('class="hidden min-w-0 flex-1 font-medium sm:block"');
+    expect(html).toContain(
+      'class="hidden min-w-0 flex-1 font-medium sm:block"'
+    );
   });
 
   it("uses the rendered PDF page dimensions instead of a fixed legal aspect frame", async () => {
@@ -194,20 +198,22 @@ describe("PdfDocumentViewer", () => {
     expect(html).toContain("bg-transparent");
     expect(html).not.toContain("transform:scale(");
     expect(html).not.toContain("transform-origin");
-    expect(html).toContain('data-testid="pdf-page-surface-1" class="bg-white shadow-2xl"');
+    expect(html).toContain(
+      'data-testid="pdf-page-surface-1" class="bg-white shadow-2xl"'
+    );
   });
 
   it("keeps the viewer shell and sidebars inside fixed viewport bounds", async () => {
     const html = await renderViewer();
 
     expect(html).toContain(
-      'class="flex h-[calc(100vh-8rem)] min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden'
+      'class="flex h-[calc(100vh-8rem)] min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden'
     );
     expect(html).toContain(
       'class="relative flex h-full min-h-0 flex-1 overflow-hidden'
     );
     expect(html).toContain(
-      'class="absolute inset-y-0 right-0 z-20 h-full w-full max-w-sm shrink-0 overflow-y-auto'
+      'class="absolute inset-y-0 right-0 z-20 h-full w-full max-w-sm shrink-0 animate-in overflow-y-auto'
     );
     expect(html).toContain("sm:w-80");
     expect(html).toContain("md:static");

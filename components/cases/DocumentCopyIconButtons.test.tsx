@@ -21,7 +21,8 @@ describe("DocumentCopyIconButtons", () => {
   });
 
   it("uses the same icon button size as the viewer toolbar controls", async () => {
-    const { DocumentCopyIconButtons } = await import("./DocumentCopyIconButtons");
+    const { DocumentCopyIconButtons } =
+      await import("./DocumentCopyIconButtons");
     const html = renderToStaticMarkup(
       <DocumentCopyIconButtons
         caseId="case-1"

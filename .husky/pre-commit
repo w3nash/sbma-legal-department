@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+set -e
+
+run_step() {
+  label="$1"
+  shift
+
+  printf '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+  printf '[pre-commit] %s\n' "$label"
+  printf '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+
+  "$@"
+
+  printf '[ok] %s passed\n' "$label"
+}
+
+printf '\n[pre-commit] Running strict checks...\n'
+
+run_step "Lint" npm run lint
+run_step "Format check" npm run format:check
+run_step "Typecheck" npm run typecheck
+run_step "Tests" npm run test:run
+
+printf '\n[pre-commit] All checks passed.\n'

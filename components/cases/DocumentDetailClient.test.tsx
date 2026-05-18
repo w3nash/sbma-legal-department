@@ -97,7 +97,7 @@ describe("DocumentDetailClient", () => {
     );
 
     expect(html).toContain(
-      'class="flex min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden"'
+      'class="flex min-h-0 w-full max-w-full min-w-0 flex-1 overflow-hidden"'
     );
   });
 
@@ -153,6 +153,8 @@ describe("DocumentDetailClient", () => {
 
     expect(pdfDocumentViewerMock).not.toHaveBeenCalled();
     expect(html).toContain("LibreOffice conversion failed");
-    expect(html).toContain("This document is not ready for inline viewing yet.");
+    expect(html).toContain(
+      "This document is not ready for inline viewing yet."
+    );
   });
 });
