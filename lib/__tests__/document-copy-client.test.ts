@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { performDocumentCopyAction } from "@/lib/document-copy-client";
 
 describe("performDocumentCopyAction", () => {
-  it("downloads a counted copy and refreshes afterwards", async () => {
+  it("downloads a counted copy for uploaders and refreshes afterwards", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(new Blob(["pdf"]), {
         status: 200,
@@ -36,7 +36,7 @@ describe("performDocumentCopyAction", () => {
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("prints a counted copy and refreshes afterwards", async () => {
+  it("prints a counted copy for uploaders and refreshes afterwards", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(new Blob(["pdf"]), {
         status: 200,
@@ -70,7 +70,7 @@ describe("performDocumentCopyAction", () => {
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("waits for async print handoff before refreshing query-backed data", async () => {
+  it("waits for async print handoff for uploaders before refreshing query-backed data", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(new Blob(["pdf"]), {
         status: 200,
