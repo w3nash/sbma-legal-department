@@ -10,6 +10,13 @@ type PerformDocumentCopyActionOptions = {
   printBlob?: (blob: Blob, filename: string) => void | Promise<void>;
 };
 
+/**
+ * Performs a document copy action (download or print) by fetching the document from the API
+ * and routing the resulting blob to the appropriate browser handler.
+ * 
+ * @param options Configuration for the document copy action
+ * @returns A promise that resolves when the action is complete
+ */
 export async function performDocumentCopyAction({
   intent,
   documentId,
@@ -47,6 +54,12 @@ export async function performDocumentCopyAction({
   refresh();
 }
 
+/**
+ * Downloads a Blob to the user's local filesystem by creating a temporary anchor tag.
+ * 
+ * @param blob The file data to download
+ * @param filename The suggested filename for the downloaded file
+ */
 function downloadBlobToBrowser(blob: Blob, filename: string) {
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -59,6 +72,12 @@ function downloadBlobToBrowser(blob: Blob, filename: string) {
   }, 0);
 }
 
+/**
+ * Initiates a browser print dialog for a Blob by loading it into a hidden iframe.
+ * 
+ * @param blob The PDF file data to print
+ * @param filename The name of the file being printed
+ */
 function printBlobToBrowser(blob: Blob, filename: string) {
   const objectUrl = URL.createObjectURL(blob);
   const iframe = document.createElement("iframe");
@@ -84,6 +103,9 @@ function printBlobToBrowser(blob: Blob, filename: string) {
       return;
     }
 
+    // The app audits the print intent and the generation of a watermarked PDF.
+    // Browser print handoff is initiated here, but the browser cannot report back
+    // whether the user ultimately completed or cancelled the print job.
     frameWindow.focus();
     frameWindow.print();
     cleanup();

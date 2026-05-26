@@ -16,6 +16,12 @@ const DOWNLOAD_WINDOW_SECONDS = 60 * 60;
 const MANILA_TIME_ZONE = "Asia/Manila";
 const MANILA_OFFSET = "+08:00";
 
+/**
+ * Extracts the first IP address from the x-forwarded-for header.
+ * 
+ * @param xForwardedFor The x-forwarded-for header value
+ * @returns The client IP address, or undefined if not found
+ */
 function extractClientIp(xForwardedFor: string | null): string | undefined {
   if (!xForwardedFor) {
     return undefined;
@@ -27,16 +33,35 @@ function extractClientIp(xForwardedFor: string | null): string | undefined {
   return ipAddress ? ipAddress : undefined;
 }
 
+/**
+ * Sanitizes a filename for use in a Content-Disposition header attachment.
+ * 
+ * @param filename The original filename
+ * @returns A safe filename stripped of dangerous characters
+ */
 function sanitizeAttachmentFilename(filename: string): string {
   const sanitized = filename.replace(/["\\\r\n]/g, "_").trim();
   return sanitized || "document.pdf";
 }
 
+/**
+ * Determines whether the user intends to download or print the document.
+ * 
+ * @param request The incoming request containing search parameters
+ * @returns The intent of the copy action
+ */
 function getCopyIntent(request: Request): "download" | "print" {
   const intent = new URL(request.url).searchParams.get("intent");
   return intent === "print" ? "print" : "download";
 }
 
+/**
+ * Sanitizes text to safely render on a PDF using standard PDF fonts, replacing unsupported characters.
+ * 
+ * @param value The text to sanitize
+ * @param fallback The fallback string to use if the value is missing or empty
+ * @returns The sanitized text safe for PDF rendering
+ */
 function toPdfTextSafe(
   value: string | null | undefined,
   fallback: string
@@ -54,6 +79,12 @@ function toPdfTextSafe(
   return sanitized || fallback;
 }
 
+/**
+ * Formats a Date object into a standardized timestamp string in Manila time.
+ * 
+ * @param date The date to format
+ * @returns A string representation of the Manila timestamp
+ */
 function formatManilaTimestamp(date: Date): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: MANILA_TIME_ZONE,
@@ -75,6 +106,12 @@ function formatManilaTimestamp(date: Date): string {
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}${MANILA_OFFSET}`;
 }
 
+/**
+ * Converts an S3 object body stream into a Buffer.
+ * 
+ * @param body The S3 response body
+ * @returns A Buffer containing the object data
+ */
 async function bodyToBuffer(body: unknown): Promise<Buffer> {
   if (
     body &&
@@ -88,6 +125,12 @@ async function bodyToBuffer(body: unknown): Promise<Buffer> {
   throw new Error("S3 object body is not readable");
 }
 
+/**
+ * Increments the download rate limit counter for a given user and document.
+ * 
+ * @param rateLimitKey The unique key for the rate limit check
+ * @returns An object indicating whether the request is allowed and when to retry if not
+ */
 async function incrementDownloadRateLimit(rateLimitKey: string) {
   const attempts = await redis.incr(rateLimitKey);
 
@@ -107,6 +150,14 @@ async function incrementDownloadRateLimit(rateLimitKey: string) {
   };
 }
 
+/**
+ * Handles GET requests to download or print a document. Validates permissions, 
+ * enforces rate limits, fetches from S3, decrypts, and applies a forensic watermark.
+ * 
+ * @param request The incoming HTTP request
+ * @param context The route context containing the document ID parameter
+ * @returns A NextResponse containing the watermarked PDF or an error
+ */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ documentId: string }> }
@@ -219,6 +270,8 @@ export async function GET(
     ];
     const watermarkedPdf = await addWatermark(originalPdf, watermark);
 
+    // Print requests are audited separately from downloads so the trail clearly
+    // records when a user requested a printable copy instead of a standard file download.
     await logAudit({
       action: intent === "print" ? AuditAction.PRINT : AuditAction.DOWNLOAD,
       userId: user.id,

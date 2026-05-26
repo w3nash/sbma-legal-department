@@ -45,11 +45,19 @@ describe("permissions", () => {
   it("admin can download any document", () => {
     expect(canDownloadDocument({ role: UserRole.Admin }, null)).toBe(true);
   });
-  it("member with membership can download document", () => {
+  it("viewer cannot download document", () => {
     expect(
       canDownloadDocument(
         { role: UserRole.Member },
         { role: MembershipRole.Viewer }
+      )
+    ).toBe(false);
+  });
+  it("uploader can download document", () => {
+    expect(
+      canDownloadDocument(
+        { role: UserRole.Member },
+        { role: MembershipRole.Uploader }
       )
     ).toBe(true);
   });

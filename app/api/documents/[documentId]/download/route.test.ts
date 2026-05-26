@@ -78,7 +78,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
     redisIncrMock.mockResolvedValue(1);
@@ -103,7 +103,19 @@ describe("GET /api/documents/[documentId]/download", () => {
     vi.resetAllMocks();
   });
 
-  it("streams a watermarked pdf attachment for an authorized user", async () => {
+  it("streams a watermarked pdf attachment for an uploader", async () => {
+    documentFindUniqueMock.mockResolvedValue({
+      id: "doc-1",
+      caseId: "case-1",
+      controlNumber: "CTRL-123",
+      originalFilename: "Evidence.pdf",
+      status: DocumentStatus.ready,
+      storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
+      encryptionKey: "wrapped-key",
+      case: {
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
+      },
+    });
     const { GET } = await import("./route");
 
     const response = await GET(
@@ -191,7 +203,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
   });
 
-  it("returns 403 when the user cannot download the document", async () => {
+  it("returns 403 when the user is a viewer without uploader role", async () => {
     documentFindUniqueMock.mockResolvedValueOnce({
       id: "doc-1",
       caseId: "case-1",
@@ -201,7 +213,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "someone-else", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
       },
     });
 
@@ -227,7 +239,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
 
@@ -254,7 +266,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: null,
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
 
@@ -354,7 +366,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
   });
 
-  it("supports print intent while using the same counted watermark flow", async () => {
+  it("supports print intent while using the same counted watermark flow for uploaders", async () => {
     const { GET } = await import("./route");
 
     const response = await GET(
@@ -382,12 +394,16 @@ describe("GET /api/documents/[documentId]/download", () => {
         downloadCount: true,
       },
     });
+    expect(response.headers.get("content-disposition")).toBe(
+      'inline; filename="Evidence.pdf"'
+    );
     expect(logAuditMock).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "PRINT",
         metadata: expect.objectContaining({
           controlNumber: "CTRL-123",
           copyNumber: 7,
+          printedAt: "2026-04-28T16:09:10+08:00",
         }),
       })
     );

@@ -72,7 +72,7 @@ describe("document viewer route", () => {
       storedViewerKey: "documents/case-1/control-1/viewer.enc",
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
     redisGetMock.mockResolvedValue(

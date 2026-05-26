@@ -33,15 +33,15 @@ export function canUploadToCase(
 }
 
 /**
- * Determines whether a user is allowed to download a document.
- * Admins can download any document; members need an active membership.
+ * Determines whether a user is allowed to download or print a document.
+ * Admins can download any document; members need an uploader membership.
  */
 export function canDownloadDocument(
   user: UserContext,
   membership: MembershipContext | null
 ): boolean {
   if (user.role === UserRole.Admin) return true;
-  return membership !== null;
+  return membership?.role === MembershipRole.Uploader;
 }
 
 /**
