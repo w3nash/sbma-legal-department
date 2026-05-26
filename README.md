@@ -89,7 +89,7 @@ npm run db:studio    # Prisma Studio GUI
 | Role | Scope | Capabilities |
 |---|---|---|
 | **Admin** | System-wide | All cases, all documents, user management, audit logs |
-| **Member / Viewer** | Per-case | View and download documents in assigned cases |
+| **Member / Viewer** | Per-case | View documents in assigned cases |
 | **Member / Uploader** | Per-case | View, download, and upload documents in assigned cases |
 
 ## Deployment

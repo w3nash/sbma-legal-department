@@ -239,7 +239,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
 
@@ -266,7 +266,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       storedOriginalKey: null,
       encryptionKey: "wrapped-key",
       case: {
-        members: [{ userId: "user-1", role: MembershipRole.Viewer }],
+        members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
     });
 

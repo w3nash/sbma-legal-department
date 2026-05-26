@@ -87,7 +87,7 @@ describe("document viewer page", () => {
           status: DocumentStatus.ready,
           createdAt: "2026-04-28T00:00:00.000Z",
           viewerAvailable: true,
-          downloadAvailable: true,
+          downloadAvailable: false,
         },
       },
       undefined
