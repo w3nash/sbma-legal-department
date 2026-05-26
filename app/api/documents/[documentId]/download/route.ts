@@ -219,6 +219,8 @@ export async function GET(
     ];
     const watermarkedPdf = await addWatermark(originalPdf, watermark);
 
+    // Print requests are audited separately from downloads so the trail clearly
+    // records when a user requested a printable copy instead of a standard file download.
     await logAudit({
       action: intent === "print" ? AuditAction.PRINT : AuditAction.DOWNLOAD,
       userId: user.id,

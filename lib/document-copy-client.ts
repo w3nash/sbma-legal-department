@@ -84,6 +84,9 @@ function printBlobToBrowser(blob: Blob, filename: string) {
       return;
     }
 
+    // The app audits the print intent and the generation of a watermarked PDF.
+    // Browser print handoff is initiated here, but the browser cannot report back
+    // whether the user ultimately completed or cancelled the print job.
     frameWindow.focus();
     frameWindow.print();
     cleanup();

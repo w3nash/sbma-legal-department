@@ -382,12 +382,16 @@ describe("GET /api/documents/[documentId]/download", () => {
         downloadCount: true,
       },
     });
+    expect(response.headers.get("content-disposition")).toBe(
+      'inline; filename="Evidence.pdf"'
+    );
     expect(logAuditMock).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "PRINT",
         metadata: expect.objectContaining({
           controlNumber: "CTRL-123",
           copyNumber: 7,
+          printedAt: "2026-04-28T16:09:10+08:00",
         }),
       })
     );

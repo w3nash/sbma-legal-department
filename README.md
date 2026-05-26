@@ -6,8 +6,9 @@ Internal legal affairs document archive for managing case files with encrypted s
 
 - **Case-centric** — documents are organized under cases, each with its own member roster
 - **Encrypted at rest** — every file is AES-256-GCM encrypted; S3 compromise alone does not expose documents
-- **Forensic watermarking** — viewer copies show only a control number; downloads burn a unique per-user watermark (name, email, IP, timestamp) into the PDF
-- **Full audit trail** — every upload, view, download, login, and logout is logged
+- **Forensic watermarking** — viewer copies show only a control number; downloads and print copies burn a unique per-user watermark (name, email, IP, timestamp) into the PDF
+- **Print tracking** — print requests are logged as a distinct `PRINT` audit action while the browser handles print handoff; the app tracks print intent and watermark generation, not final OS-level printer completion.
+- **Full audit trail** — every upload, view, download, print, login, and logout is logged
 
 ## Stack
 
