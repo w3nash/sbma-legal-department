@@ -15,6 +15,7 @@ import {
   getProcessedPdfFilename,
   safeBasename,
 } from "@/lib/document-upload";
+import { validatePdfReadability } from "@/lib/readability";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
@@ -135,6 +136,16 @@ export async function processDocument(documentId: string) {
       );
       assertPdfSize(pdfBuffer, "Converted");
 
+      // Validate readability after conversion
+      const conversionReport = await validatePdfReadability(pdfBuffer, {
+        label: "Post-conversion",
+      });
+      if (!conversionReport.valid) {
+        throw new Error(
+          `Converted PDF failed readability check: ${conversionReport.errors.join("; ")}`
+        );
+      }
+
       const originalKey = `documents/${doc.caseId}/${doc.controlNumber}/original.enc`;
       const encryptedOriginal = encryptFile(pdfBuffer, fileKey);
       uploadedKeys.push(originalKey);
@@ -146,11 +157,18 @@ export async function processDocument(documentId: string) {
         })
       );
 
-      const viewerPdf = await addViewerWatermark(
-        pdfBuffer,
-        `Control Number: ${doc.controlNumber}`
-      );
+      const viewerPdf = await addViewerWatermark(pdfBuffer, doc.controlNumber);
       assertPdfSize(viewerPdf, "Viewer");
+
+      // Validate readability after watermarking
+      const viewerReport = await validatePdfReadability(viewerPdf, {
+        label: "Post-watermark",
+      });
+      if (!viewerReport.valid) {
+        throw new Error(
+          `Viewer PDF failed readability check: ${viewerReport.errors.join("; ")}`
+        );
+      }
 
       const viewerKey = `documents/${doc.caseId}/${doc.controlNumber}/viewer.enc`;
       const encryptedViewer = encryptFile(viewerPdf, fileKey);

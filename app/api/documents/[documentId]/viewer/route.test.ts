@@ -168,7 +168,7 @@ describe("document viewer route", () => {
     expect(s3SendMock).toHaveBeenCalledOnce();
     expect(addViewerWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      "Control Number: control-1"
+      "control-1"
     );
     expect(redisSetexMock).toHaveBeenCalledWith(
       "viewer:v2:control-1",
@@ -269,7 +269,7 @@ describe("document viewer route", () => {
     expect(s3SendMock).toHaveBeenCalledOnce();
     expect(addViewerWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      "Control Number: control-1"
+      "control-1"
     );
     expect(redisSetexMock).toHaveBeenCalledWith(
       "viewer:v2:control-1",

@@ -17,6 +17,8 @@ export const env = createEnv({
     S3_AUTO_CREATE_BUCKET: z.enum(["true", "false"]).default("false"),
     REDIS_URL: z.string().min(1, "REDIS_URL is required"),
     SOFFICE_PATH: z.string().min(1).optional(),
+    WATERMARK_SEAL_ENABLED: z.enum(["true", "false"]).default("true"),
+    WATERMARK_SEAL_PATH: z.string().min(1).optional(),
     MASTER_ENCRYPTION_KEY: z
       .string()
       .min(1, "MASTER_ENCRYPTION_KEY is required")

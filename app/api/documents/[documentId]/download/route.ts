@@ -9,7 +9,7 @@ import { canDownloadDocument } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { BUCKET_NAME, s3Client } from "@/lib/s3";
-import { addWatermark } from "@/lib/watermark";
+import { addForensicWatermark } from "@/lib/watermark";
 
 const DOWNLOAD_LIMIT = 30;
 const DOWNLOAD_WINDOW_SECONDS = 60 * 60;
@@ -261,14 +261,13 @@ export async function GET(
     });
     const ipAddress = extractClientIp(request.headers.get("x-forwarded-for"));
     const generatedAt = formatManilaTimestamp(new Date());
-    const watermark = [
-      `Control Number: ${toPdfTextSafe(doc.controlNumber, "unknown")}`,
-      `Copy Number: ${downloadCount}`,
-      `User: ${toPdfTextSafe(user.name, "Unknown User")}`,
-      `Email: ${toPdfTextSafe(user.email, "unknown")}`,
-      `Timestamp: ${generatedAt}`,
-    ];
-    const watermarkedPdf = await addWatermark(originalPdf, watermark);
+    const watermarkedPdf = await addForensicWatermark(originalPdf, {
+      controlNumber: toPdfTextSafe(doc.controlNumber, "unknown"),
+      copyNumber: downloadCount,
+      userName: toPdfTextSafe(user.name, "Unknown User"),
+      userEmail: toPdfTextSafe(user.email, "unknown"),
+      timestamp: generatedAt,
+    });
 
     // Print requests are audited separately from downloads so the trail clearly
     // records when a user requested a printable copy instead of a standard file download.

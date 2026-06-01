@@ -12,6 +12,7 @@ const encryptFileMock = vi.hoisted(() => vi.fn());
 const convertToPDFMock = vi.hoisted(() => vi.fn());
 const addViewerWatermarkMock = vi.hoisted(() => vi.fn());
 const logAuditMock = vi.hoisted(() => vi.fn());
+const validatePdfReadabilityMock = vi.hoisted(() => vi.fn());
 const mkdtempMock = vi.hoisted(() => vi.fn());
 const writeFileMock = vi.hoisted(() => vi.fn());
 const rmMock = vi.hoisted(() => vi.fn());
@@ -57,6 +58,10 @@ vi.mock("@/lib/audit", () => ({
   logAudit: logAuditMock,
 }));
 
+vi.mock("@/lib/readability", () => ({
+  validatePdfReadability: validatePdfReadabilityMock,
+}));
+
 vi.mock("fs/promises", () => ({
   default: {
     mkdtemp: mkdtempMock,
@@ -90,6 +95,15 @@ describe("processDocument", () => {
       .mockResolvedValue({});
     documentUpdateMock.mockResolvedValue({});
     logAuditMock.mockResolvedValue(true);
+    validatePdfReadabilityMock.mockResolvedValue({
+      valid: true,
+      pageCount: 1,
+      totalSizeBytes: 5000,
+      bytesPerPage: 5000,
+      pages: [{ index: 0, width: 612, height: 792 }],
+      errors: [],
+      warnings: [],
+    });
   });
 
   afterEach(() => {
@@ -117,7 +131,7 @@ describe("processDocument", () => {
 
     expect(addViewerWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      "Control Number: control-1"
+      "control-1"
     );
     expect(documentUpdateMock).toHaveBeenCalledWith({
       where: { id: "doc-1" },
@@ -176,5 +190,92 @@ describe("processDocument", () => {
         error: "LibreOffice failed",
       })
     );
+  });
+
+  it("marks document failed when post-conversion readability check fails", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    documentFindUniqueMock.mockResolvedValue({
+      id: "doc-3",
+      caseId: "case-1",
+      controlNumber: "control-3",
+      originalFilename: "BadConvert.docx",
+      storedSourceKey: "documents/case-1/control-3/source.enc",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      encryptionKey: Buffer.from("wrapped-key"),
+      status: DocumentStatus.processing,
+    });
+
+    validatePdfReadabilityMock.mockResolvedValueOnce({
+      valid: false,
+      pageCount: 0,
+      totalSizeBytes: 100,
+      bytesPerPage: 0,
+      pages: [],
+      errors: ["Post-conversion: PDF has no pages"],
+      warnings: [],
+    });
+
+    const { processDocument } = await import("@/lib/document-processing");
+    await processDocument("doc-3");
+
+    expect(documentUpdateMock).toHaveBeenCalledWith({
+      where: { id: "doc-3" },
+      data: {
+        status: DocumentStatus.failed,
+        processingError: expect.stringContaining("readability check"),
+      },
+    });
+  });
+
+  it("marks document failed when post-watermark readability check fails", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    documentFindUniqueMock.mockResolvedValue({
+      id: "doc-4",
+      caseId: "case-1",
+      controlNumber: "control-4",
+      originalFilename: "BadWatermark.docx",
+      storedSourceKey: "documents/case-1/control-4/source.enc",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      encryptionKey: Buffer.from("wrapped-key"),
+      status: DocumentStatus.processing,
+    });
+
+    // First call (post-conversion) passes, second call (post-watermark) fails
+    validatePdfReadabilityMock
+      .mockResolvedValueOnce({
+        valid: true,
+        pageCount: 1,
+        totalSizeBytes: 5000,
+        bytesPerPage: 5000,
+        pages: [{ index: 0, width: 612, height: 792 }],
+        errors: [],
+        warnings: [],
+      })
+      .mockResolvedValueOnce({
+        valid: false,
+        pageCount: 1,
+        totalSizeBytes: 200,
+        bytesPerPage: 200,
+        pages: [{ index: 0, width: 612, height: 792 }],
+        errors: ["Post-watermark: PDF averages only 200 bytes/page"],
+        warnings: [],
+      });
+
+    const { processDocument } = await import("@/lib/document-processing");
+    await processDocument("doc-4");
+
+    expect(documentUpdateMock).toHaveBeenCalledWith({
+      where: { id: "doc-4" },
+      data: {
+        status: DocumentStatus.failed,
+        processingError: expect.stringContaining("readability check"),
+      },
+    });
   });
 });
