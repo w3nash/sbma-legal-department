@@ -135,7 +135,7 @@ function buildForensicFooterLines(details: ForensicWatermarkDetails): string[] {
 function parseCopyNumberFromLines(lines: string[]): number {
   const parsed = Number.parseInt(
     lines
-      .find((line) => line.startsWith("Copy Number:"))
+      .find((line) => line.startsWith(" :"))
       ?.replace(/^Copy Number:\s*/, "") ?? "0",
     10
   );

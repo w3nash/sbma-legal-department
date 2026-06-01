@@ -353,8 +353,18 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
 
     expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      message: "Document storage unavailable",
+    });
     expect(documentUpdateMock).not.toHaveBeenCalled();
     expect(logAuditMock).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Document download failed",
+      expect.objectContaining({
+        documentId: "doc-1",
+        error: "Watermark generation failed",
+      })
+    );
     consoleErrorSpy.mockRestore();
   });
 
