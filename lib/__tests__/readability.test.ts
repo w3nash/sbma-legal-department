@@ -277,7 +277,7 @@ describe("validatePdfReadability", () => {
     const pdf = await createTestPdf(2, { addText: true });
     const watermarked = await addViewerWatermark(
       pdf,
-      "Control Number: TEST-001"
+      "TEST-001"
     );
     const report = await validatePdfReadability(watermarked, {
       label: "Post-watermark",
@@ -300,7 +300,7 @@ describe("validatePdfReadability", () => {
     // Step 2: Watermark and validate again
     const watermarked = await addViewerWatermark(
       pdf,
-      "Control Number: ROUND-TRIP"
+      "ROUND-TRIP"
     );
     const postReport = await validatePdfReadability(watermarked, {
       label: "Post-watermark",

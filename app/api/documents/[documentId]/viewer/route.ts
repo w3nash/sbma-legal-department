@@ -163,10 +163,7 @@ export async function GET(
       );
       const fileKey = decryptKey(document.encryptionKey);
       const originalPdf = decryptFile(encryptedOriginal, fileKey);
-      pdfBuffer = await addViewerWatermark(
-        originalPdf,
-        `Control Number: ${document.controlNumber}`
-      );
+      pdfBuffer = await addViewerWatermark(originalPdf, document.controlNumber);
       await safeSetCachedViewer(
         viewerCacheKey,
         encryptFile(pdfBuffer, fileKey)

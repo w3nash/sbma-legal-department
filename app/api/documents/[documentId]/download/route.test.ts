@@ -12,7 +12,7 @@ const redisTtlMock = vi.hoisted(() => vi.fn());
 const s3SendMock = vi.hoisted(() => vi.fn());
 const decryptKeyMock = vi.hoisted(() => vi.fn());
 const decryptFileMock = vi.hoisted(() => vi.fn());
-const addWatermarkMock = vi.hoisted(() => vi.fn());
+const addForensicWatermarkMock = vi.hoisted(() => vi.fn());
 const logAuditMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth-guards", () => ({
@@ -49,7 +49,7 @@ vi.mock("@/lib/crypto", () => ({
 }));
 
 vi.mock("@/lib/watermark", () => ({
-  addWatermark: addWatermarkMock,
+  addForensicWatermark: addForensicWatermarkMock,
 }));
 
 vi.mock("@/lib/audit", () => ({
@@ -94,7 +94,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     });
     decryptKeyMock.mockReturnValue("file-key");
     decryptFileMock.mockReturnValue(Buffer.from("%PDF-original"));
-    addWatermarkMock.mockResolvedValue(Buffer.from("%PDF-download"));
+    addForensicWatermarkMock.mockResolvedValue(Buffer.from("%PDF-download"));
     logAuditMock.mockResolvedValue(true);
   });
 
@@ -167,17 +167,17 @@ describe("GET /api/documents/[documentId]/download", () => {
       documentUpdateMock.mock.invocationCallOrder[0]
     );
     expect(documentUpdateMock.mock.invocationCallOrder[0]).toBeLessThan(
-      addWatermarkMock.mock.invocationCallOrder[0]
+      addForensicWatermarkMock.mock.invocationCallOrder[0]
     );
-    expect(addWatermarkMock).toHaveBeenCalledWith(
+    expect(addForensicWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      [
-        "Control Number: CTRL-123",
-        "Copy Number: 7",
-        "User: Taylor Test",
-        "Email: taylor@example.com",
-        "Timestamp: 2026-04-28T16:09:10+08:00",
-      ]
+      {
+        controlNumber: "CTRL-123",
+        copyNumber: 7,
+        userName: "Taylor Test",
+        userEmail: "taylor@example.com",
+        timestamp: "2026-04-28T16:09:10+08:00",
+      }
     );
     expect(logAuditMock).toHaveBeenCalledWith({
       action: "DOWNLOAD",
@@ -320,7 +320,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       message: "Document storage unavailable",
     });
     expect(documentUpdateMock).not.toHaveBeenCalled();
-    expect(addWatermarkMock).not.toHaveBeenCalled();
+    expect(addForensicWatermarkMock).not.toHaveBeenCalled();
     expect(logAuditMock).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Document download failed",
@@ -354,15 +354,15 @@ describe("GET /api/documents/[documentId]/download", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(addWatermarkMock).toHaveBeenCalledWith(
+    expect(addForensicWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
-      [
-        "Control Number: CTRL-123",
-        "Copy Number: 7",
-        "User: ????",
-        "Email: te?st@example.com",
-        "Timestamp: 2026-04-28T16:09:10+08:00",
-      ]
+      {
+        controlNumber: "CTRL-123",
+        copyNumber: 7,
+        userName: "????",
+        userEmail: "te?st@example.com",
+        timestamp: "2026-04-28T16:09:10+08:00",
+      }
     );
   });
 
