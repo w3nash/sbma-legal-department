@@ -177,7 +177,6 @@ export async function GET(
       status: true,
       storedOriginalKey: true,
       encryptionKey: true,
-      downloadCount: true,
       case: {
         select: {
           members: {
@@ -249,16 +248,6 @@ export async function GET(
     const encryptedOriginal = await bodyToBuffer(s3Object.Body);
     const fileKey = decryptKey(doc.encryptionKey);
     const originalPdf = decryptFile(encryptedOriginal, fileKey);
-    const nextCopyNumber = doc.downloadCount + 1;
-    const ipAddress = extractClientIp(request.headers.get("x-forwarded-for"));
-    const generatedAt = formatManilaTimestamp(new Date());
-    const watermarkedPdf = await addForensicWatermark(originalPdf, {
-      controlNumber: toPdfTextSafe(doc.controlNumber, "unknown"),
-      copyNumber: nextCopyNumber,
-      userName: toPdfTextSafe(user.name, "Unknown User"),
-      userEmail: toPdfTextSafe(user.email, "unknown"),
-      timestamp: generatedAt,
-    });
     const { downloadCount } = await prisma.document.update({
       where: { id: doc.id },
       data: {
@@ -269,6 +258,15 @@ export async function GET(
       select: {
         downloadCount: true,
       },
+    });
+    const ipAddress = extractClientIp(request.headers.get("x-forwarded-for"));
+    const generatedAt = formatManilaTimestamp(new Date());
+    const watermarkedPdf = await addForensicWatermark(originalPdf, {
+      controlNumber: toPdfTextSafe(doc.controlNumber, "unknown"),
+      copyNumber: downloadCount,
+      userName: toPdfTextSafe(user.name, "Unknown User"),
+      userEmail: toPdfTextSafe(user.email, "unknown"),
+      timestamp: generatedAt,
     });
 
     // Print requests are audited separately from downloads so the trail clearly

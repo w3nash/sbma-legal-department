@@ -168,8 +168,8 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(decryptFileMock.mock.invocationCallOrder[0]).toBeLessThan(
       documentUpdateMock.mock.invocationCallOrder[0]
     );
-    expect(addForensicWatermarkMock.mock.invocationCallOrder[0]).toBeLessThan(
-      documentUpdateMock.mock.invocationCallOrder[0]
+    expect(documentUpdateMock.mock.invocationCallOrder[0]).toBeLessThan(
+      addForensicWatermarkMock.mock.invocationCallOrder[0]
     );
     expect(addForensicWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
@@ -337,7 +337,7 @@ describe("GET /api/documents/[documentId]/download", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("does not increment downloadCount when watermarking fails", async () => {
+  it("returns 502 when watermarking fails after reserving the copy number", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -356,7 +356,15 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(await response.json()).toEqual({
       message: "Document storage unavailable",
     });
-    expect(documentUpdateMock).not.toHaveBeenCalled();
+    expect(documentUpdateMock).toHaveBeenCalledWith({
+      where: { id: "doc-1" },
+      data: { downloadCount: { increment: 1 } },
+      select: { downloadCount: true },
+    });
+    expect(addForensicWatermarkMock).toHaveBeenCalledWith(
+      Buffer.from("%PDF-original"),
+      expect.objectContaining({ copyNumber: 7 })
+    );
     expect(logAuditMock).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Document download failed",
