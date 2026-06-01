@@ -44,7 +44,7 @@ If any check fails, the document is **rejected** and marked as `failed` with a d
 
 | Check | Threshold | Rationale |
 |---|---|---|
-| Minimum bytes/page | ≥ 1,024 bytes (1 KB) | Detects pages that are blank or stripped of content during conversion |
+| Minimum bytes/page | ≥ 256 bytes | Detects pages that are blank or stripped of content during conversion |
 | Maximum total size | ≤ 50 MB | Prevents oversized files from overwhelming storage and download bandwidth |
 
 ---
@@ -144,7 +144,7 @@ npm test:run
 
 4. **Do not apply external compression** to documents before uploading — the system handles storage efficiently and any pre-compression risks quality loss.
 
-5. **Watermarks are intentionally subtle** — the control number watermark uses 40% opacity gray text to avoid obscuring document content.
+5. **Watermarks are intentionally subtle** — viewer and forensic watermarks use light gray text at 85% opacity (`rgb(0.35, 0.35, 0.35)`), diagonal background branding at 9% opacity, and an optional SBMA seal at 7% opacity in `lib/watermark.ts`.
 
 ---
 

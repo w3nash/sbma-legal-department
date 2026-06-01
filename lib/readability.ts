@@ -38,6 +38,7 @@ export type ReadabilityReport = {
   warnings: string[];
 };
 
+/** Builds a baseline readability report, optionally overriding fields for error cases. */
 function createEmptyReport(
   totalSizeBytes: number,
   overrides?: Partial<ReadabilityReport>

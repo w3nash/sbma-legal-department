@@ -77,6 +77,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       status: DocumentStatus.ready,
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
+      downloadCount: 6,
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
@@ -112,6 +113,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       status: DocumentStatus.ready,
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
+      downloadCount: 6,
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
@@ -166,8 +168,8 @@ describe("GET /api/documents/[documentId]/download", () => {
     expect(decryptFileMock.mock.invocationCallOrder[0]).toBeLessThan(
       documentUpdateMock.mock.invocationCallOrder[0]
     );
-    expect(documentUpdateMock.mock.invocationCallOrder[0]).toBeLessThan(
-      addForensicWatermarkMock.mock.invocationCallOrder[0]
+    expect(addForensicWatermarkMock.mock.invocationCallOrder[0]).toBeLessThan(
+      documentUpdateMock.mock.invocationCallOrder[0]
     );
     expect(addForensicWatermarkMock).toHaveBeenCalledWith(
       Buffer.from("%PDF-original"),
@@ -212,6 +214,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       status: DocumentStatus.ready,
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
+      downloadCount: 6,
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Viewer }],
       },
@@ -238,6 +241,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       status: DocumentStatus.processing,
       storedOriginalKey: "documents/case-1/CTRL-123/original.enc",
       encryptionKey: "wrapped-key",
+      downloadCount: 6,
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
@@ -265,6 +269,7 @@ describe("GET /api/documents/[documentId]/download", () => {
       status: DocumentStatus.ready,
       storedOriginalKey: null,
       encryptionKey: "wrapped-key",
+      downloadCount: 6,
       case: {
         members: [{ userId: "user-1", role: MembershipRole.Uploader }],
       },
@@ -329,6 +334,27 @@ describe("GET /api/documents/[documentId]/download", () => {
         error: "S3 object body is not readable",
       })
     );
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("does not increment downloadCount when watermarking fails", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    addForensicWatermarkMock.mockRejectedValueOnce(
+      new Error("Watermark generation failed")
+    );
+
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("https://example.com/api/documents/doc-1/download"),
+      { params: Promise.resolve({ documentId: "doc-1" }) }
+    );
+
+    expect(response.status).toBe(502);
+    expect(documentUpdateMock).not.toHaveBeenCalled();
+    expect(logAuditMock).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 

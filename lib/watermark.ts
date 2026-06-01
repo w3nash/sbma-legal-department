@@ -27,6 +27,7 @@ const FOOTER_TEXT_COLOR = rgb(0.35, 0.35, 0.35);
 const FOOTER_BRAND_COLOR = rgb(0.5, 0.5, 0.5);
 const SEAL_OPACITY = 0.07;
 
+/** Loads the configured SBMA seal image when seal usage is enabled. */
 async function loadSealImage(pdf: PDFDocument): Promise<PDFImage | null> {
   const sealConfig = getWatermarkSealConfig();
   if (!sealConfig.enabled || !sealConfig.path) {
@@ -44,6 +45,7 @@ async function loadSealImage(pdf: PDFDocument): Promise<PDFImage | null> {
   }
 }
 
+/** Draws repeating diagonal SBMA branding across the page background. */
 function drawDiagonalBackground(page: PDFPage, width: number, height: number) {
   const stepX = 280;
   const stepY = 190;
@@ -64,6 +66,7 @@ function drawDiagonalBackground(page: PDFPage, width: number, height: number) {
   }
 }
 
+/** Draws the SBMA seal in the top-left corner at low opacity. */
 function drawLogoTopLeft(page: PDFPage, width: number, height: number, seal: PDFImage) {
   const margin = 22;
   const logoSize = Math.min(width, height) * 0.11;
@@ -77,6 +80,7 @@ function drawLogoTopLeft(page: PDFPage, width: number, height: number, seal: PDF
   });
 }
 
+/** Draws watermark metadata lines in the top-left header block. */
 function drawTopLeftTextBlock(
   page: PDFPage,
   width: number,
@@ -115,6 +119,7 @@ function drawForensicBanner(page: PDFPage, width: number, height: number) {
   // Intentionally removed. Stakeholders requested no large "AUTHORIZED COPY" banner.
 }
 
+/** Builds footer lines for download/print forensic watermarks. */
 function buildForensicFooterLines(details: ForensicWatermarkDetails): string[] {
   return [
     `Control Number: ${details.controlNumber}`,
@@ -126,6 +131,18 @@ function buildForensicFooterLines(details: ForensicWatermarkDetails): string[] {
   ];
 }
 
+/** Parses copy number from legacy watermark lines; returns 0 when missing or non-numeric. */
+function parseCopyNumberFromLines(lines: string[]): number {
+  const parsed = Number.parseInt(
+    lines
+      .find((line) => line.startsWith("Copy Number:"))
+      ?.replace(/^Copy Number:\s*/, "") ?? "0",
+    10
+  );
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/** Builds header lines for in-app viewer watermarks. */
 function buildViewerHeaderLines(controlNumber: string): string[] {
   return [
     `Control Number: ${controlNumber}`,
@@ -133,6 +150,7 @@ function buildViewerHeaderLines(controlNumber: string): string[] {
   ];
 }
 
+/** Applies background branding, optional seal, and header text to one PDF page. */
 async function applyPageWatermark(
   page: PDFPage,
   options: {
@@ -164,6 +182,7 @@ async function applyPageWatermark(
   );
 }
 
+/** Applies the selected watermark style to every page in a PDF buffer. */
 async function watermarkPdf(
   pdfBuffer: Buffer,
   options: {
@@ -237,12 +256,7 @@ export async function addWatermark(
   const details: ForensicWatermarkDetails = {
     controlNumber:
       controlLine.replace(/^Control Number:\s*/, "") || "unknown",
-    copyNumber: Number.parseInt(
-      lines
-        .find((line) => line.startsWith("Copy Number:"))
-        ?.replace(/^Copy Number:\s*/, "") ?? "0",
-      10
-    ),
+    copyNumber: parseCopyNumberFromLines(lines),
     userName:
       lines
         .find((line) => line.startsWith("User:"))
