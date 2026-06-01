@@ -10,23 +10,33 @@ export type WatermarkSealConfig = {
   path: string | null;
 };
 
+let cachedSealConfig: WatermarkSealConfig | undefined;
+
 /**
  * Resolves whether an approved SBMA seal image should be embedded in watermarks.
  * Seal usage is gated on WATERMARK_SEAL_ENABLED and the asset file being present.
+ * Result is cached after first resolution to avoid repeated sync filesystem checks.
  */
 export function getWatermarkSealConfig(): WatermarkSealConfig {
+  if (cachedSealConfig) {
+    return cachedSealConfig;
+  }
+
   const sealEnabled = env.WATERMARK_SEAL_ENABLED === "true";
   const sealPath =
     env.WATERMARK_SEAL_PATH ??
     path.join(process.cwd(), "public", "assets", "sbma-logo-blackwhite.png");
 
   if (!sealEnabled) {
-    return { enabled: false, path: null };
+    cachedSealConfig = { enabled: false, path: null };
+    return cachedSealConfig;
   }
 
   if (!fs.existsSync(sealPath)) {
-    return { enabled: false, path: null };
-  } 
+    cachedSealConfig = { enabled: false, path: null };
+    return cachedSealConfig;
+  }
 
-  return { enabled: true, path: sealPath };
+  cachedSealConfig = { enabled: true, path: sealPath };
+  return cachedSealConfig;
 }

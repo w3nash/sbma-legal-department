@@ -158,17 +158,17 @@ export async function validatePdfReadability(
   const totalSizeBytes = buffer.length;
   const label = opts?.label ?? "PDF";
 
-  // Check 1: Structural integrity
-  const structureError = await validatePdfStructure(buffer);
-  if (structureError) {
+  let pdf: PDFDocument;
+  try {
+    pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
+  } catch {
+    const structureError =
+      "PDF structure is invalid or the file is corrupt";
     return createEmptyReport(totalSizeBytes, {
       valid: false,
       errors: [`${label}: ${structureError}`],
     });
   }
-
-  // Parse the PDF for detailed checks
-  const pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
   const pdfPages = pdf.getPages();
   const pageCount = pdfPages.length;
   const pages: PageInfo[] = pdfPages.map((page, index) => {

@@ -10,6 +10,7 @@ import {
 import {
   addForensicWatermark,
   addViewerWatermark,
+  addWatermark,
 } from "@/lib/watermark";
 import {
   WATERMARK_BRAND_NAME,
@@ -90,6 +91,34 @@ describe("watermark", () => {
     expect(drawn).toContain("Email: taylor@example.com");
     expect(drawn).toContain("Timestamp: 2026-04-28T16:09:10+08:00");
     expect(drawn.some((t) => t.includes("CONFIDENTIAL"))).toBe(true);
+  });
+
+  it("supports legacy addWatermark with a plain single-line string", async () => {
+    const original = await createBlankPdf();
+    const watermarked = await addWatermark(
+      original,
+      "Draft - Internal review only"
+    );
+    const loaded = await PDFDocument.load(watermarked);
+    const drawn = extractDrawnText(loaded);
+
+    expect(drawn).toContain("Draft - Internal review only");
+    expect(drawn.some((t) => t.startsWith("Copy Number:"))).toBe(false);
+  });
+
+  it("parses copy number from legacy forensic watermark lines", async () => {
+    const original = await createBlankPdf();
+    const watermarked = await addWatermark(original, [
+      "Control Number: CTRL-999",
+      "Copy Number: 12",
+      "User: Jane",
+      "Email: jane@example.com",
+      "Timestamp: 2026-01-01T00:00:00+08:00",
+    ]);
+    const loaded = await PDFDocument.load(watermarked);
+    const drawn = extractDrawnText(loaded);
+
+    expect(drawn).toContain("Copy Number: 12");
   });
 
   it("preserves page count after watermarking", async () => {

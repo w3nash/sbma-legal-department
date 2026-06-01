@@ -135,7 +135,7 @@ function buildForensicFooterLines(details: ForensicWatermarkDetails): string[] {
 function parseCopyNumberFromLines(lines: string[]): number {
   const parsed = Number.parseInt(
     lines
-      .find((line) => line.startsWith(" :"))
+      .find((line) => line.startsWith("Copy Number:"))
       ?.replace(/^Copy Number:\s*/, "") ?? "0",
     10
   );
@@ -241,17 +241,24 @@ export async function addWatermark(
   text: string | string[]
 ): Promise<Buffer> {
   const lines = Array.isArray(text) ? text : [text];
+
+  if (lines.length === 1) {
+    const line = lines[0] ?? "";
+    if (line.startsWith("Control Number:")) {
+      return addViewerWatermark(
+        pdfBuffer,
+        line.replace(/^Control Number:\s*/, "")
+      );
+    }
+    return watermarkPdf(pdfBuffer, {
+      style: "viewer",
+      footerLines: [line],
+    });
+  }
+
   const controlLine =
     lines.find((line) => line.startsWith("Control Number:")) ??
-    lines[0] ??
     "Control Number: unknown";
-
-  if (lines.length === 1 && controlLine.startsWith("Control Number:")) {
-    return addViewerWatermark(
-      pdfBuffer,
-      controlLine.replace(/^Control Number:\s*/, "")
-    );
-  }
 
   const details: ForensicWatermarkDetails = {
     controlNumber:
